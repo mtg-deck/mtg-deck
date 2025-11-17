@@ -1,7 +1,3 @@
-Here is a clean, professional **README.md** for your project, formatted exactly like well-maintained GitHub CLIs.
-
----
-
 # **mtg-commander**
 
 A command-line deck builder, analyzer, and management tool for *Magic: The Gathering* — focused on the Commander (EDH) format.
@@ -57,8 +53,7 @@ mtg-commander Yuriko-Ninjas
 
 | Flag                 | Description               |
 | -------------------- | ------------------------- |
-| `--set-p <password>` | Set account password.     |
-| `--set-u <username>` | Set account username.     |
+| `--get-key`          | Set account key.     |
 | `--logout`           | Clear stored credentials. |
 
 ---
@@ -168,8 +163,8 @@ mtg-commander MyDeck --export-json mydeck.json
 Clone the repository:
 
 ```bash
-git clone https://github.com/youruser/mtg-commander
-cd mtg-commander
+git clone https://github.com/mtg-deck/mtg-deck.git
+cd mtg-deck
 ```
 
 Install in editable mode:
