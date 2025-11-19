@@ -6,7 +6,7 @@ from datetime import datetime
 
 def list_decks():
     with transaction() as t:
-        decks = t.execute("SELECT * FROM decks;").fetchall()
+        decks = t.execute("SELECT * FROM decks ORDER BY last_update DESC;").fetchall()
         return decks
 
 
@@ -173,3 +173,8 @@ def delete_deck(deck_id):
     with transaction() as t:
         t.execute("DELETE FROM deck_cards WHERE deck_id = ?", (deck_id,))
         t.execute("DELETE FROM decks WHERE id = ?", (deck_id,))
+
+
+def rename_deck(old_name, new_name):
+    with transaction() as t:
+        t.execute("UPDATE decks SET nome = ? WHERE nome = ?", (new_name, old_name))

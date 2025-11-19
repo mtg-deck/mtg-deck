@@ -77,7 +77,7 @@ def cli(ctx, version, card, list_decks, deck_name, **kwargs):
     if not settings.user_is_authenticated():
         click.echo("You need to authenticate first. Call --set-key.")
         return
-    # print(kwargs)
+    print(kwargs)
     ctx.ensure_object(dict)
     ctx.obj["options"] = kwargs
 
@@ -101,18 +101,27 @@ def cli(ctx, version, card, list_decks, deck_name, **kwargs):
 
     if kwargs["copy"]:
         ctx.invoke(copy_deck, source=kwargs["copy"][0], new=kwargs["copy"][1])
+        ctx.exit()
 
     if kwargs["delete"]:
         ctx.invoke(delete_deck, deck=kwargs["delete"])
+        ctx.exit()
 
     if kwargs["export_txt"]:
         ctx.invoke(export_txt, deck_name=deck_name, path=kwargs["export_txt"])
+        ctx.exit()
 
     if kwargs["export_csv"]:
         ctx.invoke(export_csv, deck_name=deck_name, path=kwargs["export_csv"])
+        ctx.exit()
 
     if kwargs["export_json"]:
         ctx.invoke(export_json, deck_name=deck_name, path=kwargs["export_json"])
+        ctx.exit()
+
+    if kwargs["rename"]:
+        ctx.invoke(rename, old=kwargs["rename"][0], new=kwargs["rename"][1])
+        ctx.exit()
 
 
 @cli.command()
@@ -158,7 +167,20 @@ def delete_deck(deck):
 @click.argument("new")
 def rename(old, new):
     """Rename a deck."""
-    pass
+    deck_old = service.get_deck_by_name(old)
+    if not deck_old:
+        click.echo(f"Deck not found: {old}")
+        return
+    deck_new = service.get_deck_by_name(new)
+    if deck_new:
+        click.echo(f"Deck already exists: {new}")
+        return
+    click.echo("Renaming %s to %s" % (old, new))
+    try:
+        service.rename_deck(old, new)
+        click.echo("Deck renamed successfully.")
+    except Exception as e:
+        click.echo(f"Error renaming deck: {e}")
 
 
 @cli.command()
