@@ -59,6 +59,19 @@ def get_deck_cards_by_name(deck_name):
         return deck_cards
 
 
+def get_cards_by_deck_name(deck_name):
+    with transaction() as t:
+        sql = """
+        SELECT deck_cards.quantidade, cards.name, deck_cards.is_commander
+        FROM deck_cards
+        INNER JOIN cards ON deck_cards.card_id = cards.id
+        INNER JOIN decks ON deck_cards.deck_id = decks.id
+        WHERE decks.nome = ?
+        """
+        deck_cards = t.execute(sql, (deck_name,)).fetchall()
+        return deck_cards
+
+
 def add_card_to_db(card_json):
     with transaction() as t:
         params = (

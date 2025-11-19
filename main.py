@@ -1,8 +1,10 @@
 import click
 from config import settings
-from external.api import get_card_from_api
 import service
 from tabulate import tabulate
+import os
+import csv
+import json
 
 # ---------------------------------------------------------
 # Main CLI
@@ -17,9 +19,6 @@ from tabulate import tabulate
 # --commander
 # --validade
 # --recommend
-# --export-txt
-# --export-csv
-# --export-json
 # --export-cb
 # --export-decks
 # --rename
@@ -34,6 +33,9 @@ from tabulate import tabulate
 # --show
 # --delete
 # --copy
+# --export-txt
+# --export-csv
+# --export-json
 
 
 @click.group(invoke_without_command=True)
@@ -70,8 +72,11 @@ from tabulate import tabulate
 )
 @click.argument("deck_name", required=False)
 @click.pass_context
-def cli(ctx, version, card, list_decks, **kwargs):
+def cli(ctx, version, card, list_decks, deck_name, **kwargs):
     """mtg-commander — A CLI deck builder and analyzer for Magic: The Gathering EDH."""
+    if not settings.user_is_authenticated():
+        click.echo("You need to authenticate first. Call --set-key.")
+        return
     # print(kwargs)
     ctx.ensure_object(dict)
     ctx.obj["options"] = kwargs
@@ -89,16 +94,25 @@ def cli(ctx, version, card, list_decks, **kwargs):
         ctx.exit()
 
     if kwargs["show"]:
-        if kwargs["deck_name"] is None:
+        if deck_name is None:
             ctx.echo("No deck name provided.")
             ctx.exit()
-        ctx.invoke(show_deck, deck_name=kwargs["deck_name"])
+        ctx.invoke(show_deck, deck_name=deck_name)
 
     if kwargs["copy"]:
         ctx.invoke(copy_deck, source=kwargs["copy"][0], new=kwargs["copy"][1])
 
     if kwargs["delete"]:
         ctx.invoke(delete_deck, deck=kwargs["delete"])
+
+    if kwargs["export_txt"]:
+        ctx.invoke(export_txt, deck_name=deck_name, path=kwargs["export_txt"])
+
+    if kwargs["export_csv"]:
+        ctx.invoke(export_csv, deck_name=deck_name, path=kwargs["export_csv"])
+
+    if kwargs["export_json"]:
+        ctx.invoke(export_json, deck_name=deck_name, path=kwargs["export_json"])
 
 
 @cli.command()
@@ -230,9 +244,6 @@ def validade(deck_name):
 @click.argument("card_name")
 def show_card(card_name):
     """Analyze a single card."""
-    if not settings.user_is_authenticated():
-        click.echo("You need to authenticate first. Call --set-key.")
-        return
     try:
         card = service.get_card_by_name(card_name)
         if not card:
@@ -261,26 +272,69 @@ def recommend(deck_name):
 
 @cli.command()
 @click.argument("deck_name")
-@click.argument("path", type=click.Path())
+@click.argument("path", type=click.Path(exists=True, file_okay=False, dir_okay=True))
 def export_txt(deck_name, path):
     """Export a deck as .txt."""
-    pass
+    cards = service.get_cards_by_deck_name(deck_name)
+    card_list = []
+    for card in cards:
+        if card[2]:
+            card_list.insert(0, f"{card[0]} {card[1]}")
+            continue
+        card_list.append(f"{card[0]} {card[1]}")
+
+    full_path = os.path.join(path, f"{deck_name}.txt")
+    with click.open_file(full_path, "w") as f:
+        f.write("\n".join(card_list) + "\n")
+
+    click.echo(f"Escrito em {full_path}")
 
 
 @cli.command()
 @click.argument("deck_name")
-@click.argument("path", type=click.Path())
+@click.argument("path", type=click.Path(exists=True, file_okay=False, dir_okay=True))
 def export_csv(deck_name, path):
-    """Export a deck as .csv."""
-    pass
+    """Exporta um deck em formato CSV."""
+    cards = service.get_cards_by_deck_name(deck_name)
+
+    commanders = [card for card in cards if card[2]]
+    non_commanders = [card for card in cards if not card[2]]
+
+    ordered_cards = commanders + non_commanders
+
+    if os.path.isdir(path):
+        full_path = os.path.join(path, f"{deck_name}.csv")
+    else:
+        full_path = path
+
+    with click.open_file(full_path, "w", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        for qty, name, _ in ordered_cards:
+            writer.writerow([qty, name])
+
+    click.echo(f"Escrito em {full_path}")
 
 
 @cli.command()
 @click.argument("deck_name")
-@click.argument("path", type=click.Path())
+@click.argument("path", type=click.Path(exists=True, file_okay=False, dir_okay=True))
 def export_json(deck_name, path):
     """Export a deck as .json."""
-    pass
+    cards = service.get_cards_by_deck_name(deck_name)
+
+    commanders = [card for card in cards if card[2]]
+    non_commanders = [card for card in cards if not card[2]]
+
+    ordered_cards = commanders + non_commanders
+
+    cards_json = [
+        {"qty": card[0], "name": card[1], "is_commander": card[2]}
+        for card in ordered_cards
+    ]
+    full_path = os.path.join(path, f"{deck_name}.json")
+
+    with click.open_file(full_path, "w") as f:
+        json.dump(cards_json, f)
 
 
 @cli.command()
