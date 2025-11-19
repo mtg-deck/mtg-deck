@@ -1,6 +1,8 @@
 import click
 from config import settings
 from external.api import get_card_from_api
+import service
+from tabulate import tabulate
 
 # ---------------------------------------------------------
 # Main CLI
@@ -20,7 +22,6 @@ from external.api import get_card_from_api
 # --export-json
 # --export-cb
 # --export-decks
-# --list-decks
 # --delete
 # --rename
 # --copy
@@ -31,6 +32,8 @@ from external.api import get_card_from_api
 # DONE:
 # -v e --version
 # -c e --card
+# --list-decks
+# --show
 
 
 @click.group(invoke_without_command=True)
@@ -54,6 +57,7 @@ from external.api import get_card_from_api
 @click.option("--export-cb", is_flag=True, help="Export deck to clipboard.")
 @click.option("--export-decks", type=click.Path(), help="Export all decks as .zip.")
 @click.option("--list-decks", is_flag=True, help="List all saved decks.")
+@click.option("--show", is_flag=True, help="Show deck on console.")
 @click.option("--delete", help="Delete a deck.")
 @click.option("--rename", nargs=2, help="Rename a deck: <old> <new>.")
 @click.option("--copy", nargs=2, help="Copy a deck: <source> <new>.")
@@ -66,8 +70,9 @@ from external.api import get_card_from_api
 )
 @click.argument("deck_name", required=False)
 @click.pass_context
-def cli(ctx, version, card, **kwargs):
+def cli(ctx, version, card, list_decks, **kwargs):
     """mtg-commander — A CLI deck builder and analyzer for Magic: The Gathering EDH."""
+    # print(kwargs)
     ctx.ensure_object(dict)
     ctx.obj["options"] = kwargs
 
@@ -79,15 +84,20 @@ def cli(ctx, version, card, **kwargs):
         ctx.invoke(show_card, card_name=card)
         ctx.exit()
 
+    if list_decks:
+        ctx.invoke(list_all_decks)
+        ctx.exit()
+
+    if kwargs["show"]:
+        if kwargs["deck_name"] is None:
+            ctx.echo("No deck name provided.")
+            ctx.exit()
+        ctx.invoke(show_deck, deck_name=kwargs["deck_name"])
+
 
 @cli.command()
 def show_version():
     click.echo(f"mtg-commander {settings.VERSION}")
-
-
-# ---------------------------------------------------------
-# Subcommands (optional grouping if you want)
-# ---------------------------------------------------------
 
 
 @cli.command()
@@ -98,9 +108,14 @@ def open(deck_name):
 
 
 @cli.command()
-def list_decks():
+def list_all_decks():
     """List all saved decks."""
-    pass
+    decks = service.list_decks()
+    table = [["#", "Name", "Commander", "Last Modified"]]
+    for deck in decks:
+        commander = service.get_commander_name_from_deck(deck[0])
+        table.append([deck[0], deck[1], commander, deck[2]])
+    click.echo(tabulate(table, headers="firstrow"))
 
 
 @cli.command()
@@ -146,6 +161,25 @@ def random_commander():
     pass
 
 
+def show_deck(deck_name):
+    """Show a deck on console."""
+    deck = service.get_deck_by_name(deck_name)
+    if not deck:
+        click.echo(f"Deck not found: {deck_name}")
+        return
+    cards = service.get_deck_cards(deck[0])
+    table = [["Amount", "Card", "Commander"]]
+    commander = []
+    rest = []
+    for card in cards:
+        if card[2] == "COMMANDER":
+            commander.append(card)
+            continue
+        rest.append(card)
+    table = table + commander + rest
+    click.echo(tabulate(table, headers="firstrow"))
+
+
 # ---------------------------------------------------------
 # Analysis Subcommands
 # ---------------------------------------------------------
@@ -165,7 +199,6 @@ def validade(deck_name):
     pass
 
 
-@cli.command()
 @click.argument("card_name")
 def show_card(card_name):
     """Analyze a single card."""
@@ -173,7 +206,10 @@ def show_card(card_name):
         click.echo("You need to authenticate first. Call --set-key.")
         return
     try:
-        card = get_card_from_api(card_name)
+        card = service.get_card_by_name(card_name)
+        if not card:
+            click.echo(f"Card not found: {card_name}")
+            return
         for key, value in card.items():
             click.echo(f"{key}: {value}")
     except Exception as e:
