@@ -94,6 +94,9 @@ def cli(ctx, version, card, list_decks, **kwargs):
             ctx.exit()
         ctx.invoke(show_deck, deck_name=kwargs["deck_name"])
 
+    if kwargs["copy"]:
+        ctx.invoke(copy_deck, source=kwargs["copy"][0], new=kwargs["copy"][1])
+
 
 @cli.command()
 def show_version():
@@ -136,9 +139,23 @@ def rename(old, new):
 @cli.command()
 @click.argument("source")
 @click.argument("new")
-def copy(source, new):
+def copy_deck(source, new):
     """Duplicate a deck."""
-    pass
+    old_deck = service.get_deck_by_name(source)
+    if not old_deck:
+        click.echo(f"Deck not found: {source}")
+        return
+    new_deck = service.get_deck_by_name(new)
+    if new_deck:
+        click.echo(f"Deck already exists: {new}")
+        return
+    click.echo("Copying %s to %s" % (source, new))
+    try:
+        service.copy_deck(new, source)
+        click.echo("Deck copied successfully.")
+        click.echo(f"To see the new deck, run: mtg-commander --show {new}")
+    except Exception as e:
+        click.echo(f"Error copying deck: {e}")
 
 
 @cli.command()

@@ -1,5 +1,6 @@
 from db import transaction
 from external.api import get_card_from_api, get_many_cards_from_api
+from datetime import datetime
 
 
 def list_decks():
@@ -43,6 +44,18 @@ def get_deck_cards(deck_id):
             ).fetchone()
             cards.append([card[1], cards_data[0], "COMMANDER" if card[2] else ""])
         return cards
+
+
+def get_deck_cards_by_name(deck_name):
+    with transaction() as t:
+        sql = """
+        SELECT deck_cards.card_id, deck_cards.quantidade, deck_cards.is_commander
+        FROM deck_cards
+        INNER JOIN decks ON deck_cards.deck_id = decks.id
+        WHERE decks.nome = ?
+        """
+        deck_cards = t.execute(sql, (deck_name,)).fetchall()
+        return deck_cards
 
 
 def add_card_to_db(card_json):
@@ -107,3 +120,35 @@ def get_many_cards_by_name(card_names):
     cards = get_many_cards_from_api(card_names)
     for card in cards:
         add_card_to_db(card)
+
+
+def create_deck(deck_name, cursor=None):
+    with transaction(cursor=cursor) as t:
+        last_updated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        t.execute(
+            "INSERT INTO decks (nome, last_update) VALUES (?, ?);",
+            (
+                deck_name,
+                last_updated,
+            ),
+        )
+        deck = t.execute("SELECT * FROM decks WHERE nome = ?", (deck_name,)).fetchone()
+        return deck
+
+
+def copy_deck(new, old):
+    old_cards = get_deck_cards_by_name(old)
+    with transaction() as t:
+        new_deck = create_deck(new, cursor=t)
+
+        rows = [
+            (new_deck[0], card_id, quantidade, is_commander)
+            for (card_id, quantidade, is_commander) in old_cards
+        ]
+
+        sql = """
+        INSERT INTO deck_cards (deck_id, card_id, quantidade, is_commander)
+        VALUES (?, ?, ?, ?);
+        """
+
+        t.executemany(sql, rows)
