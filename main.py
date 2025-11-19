@@ -22,9 +22,7 @@ from tabulate import tabulate
 # --export-json
 # --export-cb
 # --export-decks
-# --delete
 # --rename
-# --copy
 # --import-folder
 # --random
 # --random-commander
@@ -34,6 +32,8 @@ from tabulate import tabulate
 # -c e --card
 # --list-decks
 # --show
+# --delete
+# --copy
 
 
 @click.group(invoke_without_command=True)
