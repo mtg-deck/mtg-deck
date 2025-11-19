@@ -1,3 +1,4 @@
+import sqlite3
 from db import transaction
 from external.api import get_card_from_api, get_many_cards_from_api
 from datetime import datetime
@@ -152,3 +153,10 @@ def copy_deck(new, old):
         """
 
         t.executemany(sql, rows)
+
+
+def delete_deck(deck_id):
+    # TODO: CHANGE TO CASCADE LATER
+    with transaction() as t:
+        t.execute("DELETE FROM deck_cards WHERE deck_id = ?", (deck_id,))
+        t.execute("DELETE FROM decks WHERE id = ?", (deck_id,))

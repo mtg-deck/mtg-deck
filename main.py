@@ -97,6 +97,9 @@ def cli(ctx, version, card, list_decks, **kwargs):
     if kwargs["copy"]:
         ctx.invoke(copy_deck, source=kwargs["copy"][0], new=kwargs["copy"][1])
 
+    if kwargs["delete"]:
+        ctx.invoke(delete_deck, deck=kwargs["delete"])
+
 
 @cli.command()
 def show_version():
@@ -123,9 +126,17 @@ def list_all_decks():
 
 @cli.command()
 @click.argument("deck")
-def delete(deck):
+def delete_deck(deck):
     """Delete a deck."""
-    pass
+    deck_row = service.get_deck_by_name(deck)
+    if not deck_row:
+        click.echo(f"Deck not found: {deck}")
+        return
+    try:
+        service.delete_deck(deck_row[0])
+        click.echo(f"Deck deleted successfully: {deck}")
+    except Exception as e:
+        click.echo(f"Error deleting deck: {e}")
 
 
 @cli.command()
