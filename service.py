@@ -257,3 +257,39 @@ def crete_and_insert_cards(deck_name, card_list, cursor=None):
         deck = create_deck(deck_name, cursor=t)
         deck_id = deck[0]
         insert_cards(deck_id, card_list, cursor=t)
+
+
+def remove_card_from_deck(deck_id, card_id, cursor=None):
+    with transaction(cursor=cursor) as t:
+        t.execute(
+            "DELETE FROM deck_cards WHERE deck_id = ? and card_id = ?",
+            [deck_id, card_id],
+        )
+
+
+def add_card_to_deck(deck_id, card_id, qty, cursor=None, commander=False):
+    with transaction(cursor=cursor) as t:
+        deck_card = t.execute(
+            "SELECT * FROM deck_cards WHERE deck_id = ? and card_id = ?",
+            [deck_id, card_id],
+        ).fetchone()
+        if deck_card and not commander:
+            qty = deck_card[2] + qty
+        t.execute(
+            "INSERT OR REPLACE INTO deck_cards (deck_id, card_id, quantidade, is_commander) VALUES (?, ?, ?, ?);",
+            [deck_id, card_id, qty, commander],
+        )
+
+
+def reset_comander_of_deck(deck_id, cursor=None):
+    with transaction(cursor=cursor) as t:
+        t.execute(
+            "UPDATE deck_cards SET is_commander = FALSE WHERE deck_id = ?", [deck_id]
+        )
+
+
+def set_commander(deck_id, commander_id):
+    with transaction() as t:
+        remove_card_from_deck(deck_id, commander_id, cursor=t)
+        reset_comander_of_deck(deck_id, cursor=t)
+        add_card_to_deck(deck_id, commander_id, 1, commander=True, cursor=t)

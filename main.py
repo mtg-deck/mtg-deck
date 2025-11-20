@@ -302,7 +302,7 @@ def list_decks():
         commander = service.get_commander_name_from_deck(d[0])
         table.append([d[0], d[1], commander, d[2]])
 
-    click.echo(tabulate(table, headers="firstrow"))
+    click.echo_via_pager(tabulate(table, headers="firstrow"))
 
 
 # -----------------------------------------------------------------------
@@ -326,6 +326,42 @@ def show_deck(deck_name):
 
     table += commanders + normal
     click.echo(tabulate(table, headers="firstrow"))
+
+
+# =======================================================================
+# deck set commander
+# =======================================================================
+
+
+@deck.command("set-commander")
+@click.argument("deck_name", type=DECK_NAME)
+@click.argument("commander", type=DECK_NAME)
+@click.option("--force", is_flag=True)
+def set_commander(deck_name, commander, force):
+    deck = service.get_deck_by_name(deck_name)
+    if not deck:
+        click.echo(f"Deck not found: {deck_name}")
+        return
+    try:
+        current_commander = service.get_commander_name_from_deck(deck[0])
+        if current_commander:
+            if not force and not click.confirm(
+                f"Do you want to remove {current_commander} as commander of deck {deck_name}?",
+                default=True,
+            ):
+                click.echo("Aborted.")
+                return
+            click.echo(
+                f"Removing {current_commander} as commander of deck {deck_name}."
+            )
+        click.echo(f"Setting {commander} as commander of deck {deck_name}.")
+        commander = service.get_card_by_name(commander)
+        if not commander:
+            click.echo(f"Commander not found: {commander}")
+            return
+        service.set_commander(deck[0], commander["id"])
+    except Exception as e:
+        click.echo(f"Error fetching commander: {e}")
 
 
 # =======================================================================
