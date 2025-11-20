@@ -195,3 +195,65 @@ def delete_deck(deck_id):
 def rename_deck(old_name, new_name):
     with transaction() as t:
         t.execute("UPDATE decks SET nome = ? WHERE nome = ?", (new_name, old_name))
+
+
+def replace_deck(old_name, new_cards, cursor=None):
+    with transaction(cursor=cursor) as t:
+        t.execute(
+            "DELETE FROM deck_cards WHERE deck_id = (SELECT id FROM decks WHERE nome = ?)",
+            (old_name,),
+        )
+        t.executemany(
+            "INSERT INTO deck_cards (deck_id, card_id, quantidade, is_commander) VALUES (?, ?, ?, ?);",
+            new_cards,
+        )
+
+
+def get_many_cards(card_list, cursor=None):
+    cards = get_many_cards_from_api(card_list)
+    if not cards:
+        return {}
+    cards = cards["cards"]
+    with transaction(cursor=cursor) as t:
+        cards_data = []
+        for card in cards:
+            cards_data.append(
+                (
+                    card["id"],
+                    card["name"],
+                    card["colors"],
+                    card["color_identity"],
+                    card["cmc"],
+                    card["mana_cost"],
+                    card["image"],
+                    card["art"],
+                    card["legal_commanders"],
+                    card["is_commander"],
+                    card["price"],
+                )
+            )
+        t.executemany(
+            "INSERT OR REPLACE INTO cards (id, name, colors, color_identity, cmc, mana_cost, image, art, legal_commanders, is_commander, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+            cards_data,
+        )
+        return cards
+
+
+def insert_cards(deck_id, cards_data, cursor=None):
+    with transaction(cursor=cursor) as t:
+        cards = []
+        for card in cards_data:
+            cards.append(
+                [deck_id, card["id"], card["quantidade"], card["is_commander"]]
+            )
+        t.executemany(
+            "INSERT INTO deck_cards (deck_id, card_id, quantidade, is_commander) VALUES (?, ?, ?, ?);",
+            cards,
+        )
+
+
+def crete_and_insert_cards(deck_name, card_list, cursor=None):
+    with transaction(cursor=cursor) as t:
+        deck = create_deck(deck_name, cursor=t)
+        deck_id = deck[0]
+        insert_cards(deck_id, card_list, cursor=t)
