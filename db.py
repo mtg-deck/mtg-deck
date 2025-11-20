@@ -7,15 +7,16 @@ from config import settings
 def transaction(cursor=None):
     if cursor is not None:
         yield cursor
-    else:
-        conn = sqlite3.connect(settings.DATABASE_URL)
-        cursor = conn.cursor()
-        try:
-            yield cursor
-            conn.commit()
-        except:
-            conn.rollback()
-            raise
-        finally:
-            cursor.close()
-            conn.close()
+        return
+
+    conn = sqlite3.connect(settings.DATABASE_URL)
+    cursor = conn.cursor()
+    try:
+        yield cursor
+        conn.commit()
+    except:
+        conn.rollback()
+        raise
+    finally:
+        cursor.close()
+        conn.close()

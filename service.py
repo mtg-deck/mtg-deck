@@ -1,4 +1,3 @@
-import sqlite3
 from db import transaction
 from external.api import get_card_from_api, get_many_cards_from_api
 from datetime import datetime
@@ -147,6 +146,24 @@ def create_deck(deck_name, cursor=None):
             ),
         )
         deck = t.execute("SELECT * FROM decks WHERE nome = ?", (deck_name,)).fetchone()
+        return deck
+
+
+def create_deck_with_initial_commander(deck_name, commander_id):
+    with transaction() as t:
+        last_updated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        t.execute(
+            "INSERT INTO decks (nome, last_update) VALUES (?, ?);",
+            (
+                deck_name,
+                last_updated,
+            ),
+        )
+        deck = t.execute("SELECT * FROM decks WHERE nome = ?", (deck_name,)).fetchone()
+        t.execute(
+            "INSERT INTO deck_cards (deck_id, card_id, quantidade, is_commander) VALUES (?, ?, 1, TRUE);",
+            (deck[0], commander_id),
+        )
         return deck
 
 

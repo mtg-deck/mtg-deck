@@ -16,26 +16,26 @@ import json
 # --logout
 # --analyze
 # -f e --file
-# --commander
 # --validade
 # --recommend
 # --export-cb
 # --export-decks
-# --rename
 # --import-folder
 # --random
 # --random-commander
 
 # DONE:
+# --rename
 # -v e --version
 # -c e --card
-# --list-decks
+# --list-decks e --list
 # --show
 # --delete
 # --copy
 # --export-txt
 # --export-csv
 # --export-json
+# --commander
 
 
 @click.group(invoke_without_command=True)
@@ -46,7 +46,6 @@ import json
 @click.option(
     "-f", "--file", type=click.Path(), help="Create a new deck from a .txt file."
 )
-@click.option("--commander", help="Set commander when creating a new deck.")
 @click.option(
     "--analyze", is_flag=True, help="Analyze the deck without launching the UI."
 )
@@ -58,7 +57,7 @@ import json
 @click.option("--export-json", type=click.Path(), help="Export deck as .json.")
 @click.option("--export-cb", is_flag=True, help="Export deck to clipboard.")
 @click.option("--export-decks", type=click.Path(), help="Export all decks as .zip.")
-@click.option("--list-decks", is_flag=True, help="List all saved decks.")
+@click.option("--list-decks", "--list", is_flag=True, help="List all saved decks.")
 @click.option("--show", is_flag=True, help="Show deck on console.")
 @click.option("--delete", help="Delete a deck.")
 @click.option("--rename", nargs=2, help="Rename a deck: <old> <new>.")
@@ -71,6 +70,7 @@ import json
     "--random-commander", is_flag=True, help="Fetch a random legal Commander."
 )
 @click.argument("deck_name", required=False)
+@click.argument("commander", required=False)
 @click.pass_context
 def cli(ctx, version, card, list_decks, deck_name, **kwargs):
     """mtg-commander — A CLI deck builder and analyzer for Magic: The Gathering EDH."""
@@ -98,6 +98,7 @@ def cli(ctx, version, card, list_decks, deck_name, **kwargs):
             ctx.echo("No deck name provided.")
             ctx.exit()
         ctx.invoke(show_deck, deck_name=deck_name)
+        ctx.exit()
 
     if kwargs["copy"]:
         ctx.invoke(copy_deck, source=kwargs["copy"][0], new=kwargs["copy"][1])
@@ -123,6 +124,9 @@ def cli(ctx, version, card, list_decks, deck_name, **kwargs):
         ctx.invoke(rename, old=kwargs["rename"][0], new=kwargs["rename"][1])
         ctx.exit()
 
+    if deck_name:
+        ctx.invoke(open_or_create, deck_name=deck_name, commander=kwargs["commander"])
+
 
 @cli.command()
 def show_version():
@@ -131,9 +135,36 @@ def show_version():
 
 @cli.command()
 @click.argument("deck_name")
-def open(deck_name):
+@click.argument("commander", required=False)
+def open_or_create(deck_name, commander=None):
     """Open or create a deck."""
-    pass
+    try:
+        deck = service.get_deck_by_name(deck_name)
+    except Exception as e:
+        click.echo(f"Error fetching deck: {e}")
+        return
+    if deck:
+        click.echo(f"Opening deck: {deck_name}")
+    else:
+        click.echo(f"Creating deck: {deck_name}")
+        if commander:
+            try:
+                card = service.get_card_by_name(commander)
+                if not card:
+                    click.echo(f"Commander not found: {commander}")
+                    click.echo("Aborting")
+                    return
+                deck = service.create_deck_with_initial_commander(deck_name, card["id"])
+                click.echo(f"Deck created successfully: {deck_name}")
+            except Exception as e:
+                click.echo(f"Error creating deck: {e}")
+        else:
+            try:
+                deck = service.create_deck(deck_name)
+                click.echo(f"Deck created successfully: {deck_name}")
+            except Exception as e:
+                click.echo(f"Error creating deck: {e}")
+        return
 
 
 @cli.command()
