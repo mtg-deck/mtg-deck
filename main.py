@@ -9,6 +9,27 @@ import json
 from tabulate import tabulate
 from utils import validate_txt
 
+# TODO: Implementar random_card (gerar cartas aleatórias)
+# TODO: Implementar random_commander (gerar comandante aleatório)
+# TODO: Adicionar validação extra no DECK_NAME para tamanho máximo/único
+# TODO: Melhorar create_deck_from_file — validar commander dentro do .txt
+# TODO: Implementar exportação padronizada com commander no topo
+# TODO: Criar comandos de import (moxfield/archidekt/etc)
+# TODO: Criar comando para adicionar card a um deck (deck add)
+# TODO: Criar comando para remover card de um deck (deck remove)
+# TODO: Criar comando para atualizar quantidade (deck set-qty)
+# TODO: Criar comando search de cards no CLI
+# TODO: Mover prints para flags opcionais (--verbose, --quiet)
+# TODO: Melhorar card_show com formatação/tabulação
+# TODO: Adicionar comando deck stats (cores, curva de mana, etc)
+# TODO: Criar comando deck price (somar preços)
+# TODO: Sincronizar banco com API (update-cards)
+# TODO: Validar que a pasta do export é gravável (não só exists=True)
+# TODO: Criar um comando global config para API key, temas, preferências
+# TODO: Adicionar opção --force no delete/copy/rename
+# TODO: Permitir shorthand para deck_name (ex: completar parcial)
+# TODO: Adicionar testes unitários dos comandos
+# TODO: Garantir consistência dos tipos de retorno (service layer)
 
 # =======================================================================
 # UTILS & TYPES
@@ -208,6 +229,9 @@ def delete_deck(deck_name):
         click.echo("Deck not found.")
         return
 
+    if not click.confirm(f"Are you sure you want to delete {deck_name}?", default=True):
+        return
+
     service.delete_deck(deck[0])
     click.echo(f"Deck deleted: {deck_name}")
 
@@ -229,6 +253,11 @@ def rename_deck(old, new):
         click.echo("Target deck already exists.")
         return
 
+    if not click.confirm(
+        f"Are you sure you want to rename {old} to {new}?", default=True
+    ):
+        return
+
     service.rename_deck(old, new)
     click.echo("Renamed successfully.")
 
@@ -248,6 +277,11 @@ def copy_deck(source, new):
 
     if service.get_deck_by_name(new):
         click.echo("Target deck already exists.")
+        return
+
+    if not click.confirm(
+        f"Are you sure you want to copy {source} to {new}?", default=True
+    ):
         return
 
     service.copy_deck(new, source)
