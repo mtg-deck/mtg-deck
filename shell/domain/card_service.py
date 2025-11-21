@@ -1,0 +1,133 @@
+from shell.external.api import get_card_from_api, get_many_cards_from_api
+from shell.infra.db import transaction
+from shell.domain.card import Card
+
+
+def get_card_by_name(card_name: str, cursor=None):
+    with transaction(cursor=cursor) as t:
+        card_data = t.execute(
+            "SELECT * FROM cards WHERE name = ?", (card_name,)
+        ).fetchone()
+        if card_data is None:
+            card = get_card_from_api(card_name)
+
+            t.execute(
+                "INSERT INTO cards (id, name, colors, colorIdentity, cmc, mana_cost, image, art, legal_commanders, is_commander) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                card.get_values_tuple(),
+            )
+
+        else:
+            card = Card(
+                card_data[0],
+                card_data[1],
+                card_data[2],
+                card_data[3],
+                card_data[4],
+                card_data[5],
+                card_data[6],
+                card_data[7],
+                card_data[8],
+                card_data[9],
+                card_data[10],
+            )
+
+        return card
+
+
+def get_card_by_id(card_id: int, cursor=None):
+    with transaction(cursor=cursor) as t:
+        card_data = t.execute("SELECT * FROM cards WHERE id = ?", (card_id,)).fetchone()
+        card = Card(
+            card_data[0],
+            card_data[1],
+            card_data[2],
+            card_data[3],
+            card_data[4],
+            card_data[5],
+            card_data[6],
+            card_data[7],
+            card_data[8],
+            card_data[9],
+            card_data[10],
+        )
+        return card
+
+
+def insert_or_update_card(card: Card, cursor=None):
+    with transaction(cursor=cursor) as t:
+        sql = """
+        INSERT INTO cards 
+        (id, name, colors, color_identity, cmc, mana_cost, image, art, legal_commanders, is_commander) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id)
+        DO UPDATE SET
+            name = excluded.name,
+            colors = excluded.colors,
+            color_identity = excluded.color_identity,
+            cmc = excluded.cmc,
+            mana_cost = excluded.mana_cost,
+            prices = excluded.prices,
+            image = excluded.image,
+            art = excluded.art,
+            legal_commanders = excluded.legal_commanders,
+            is_commander = excluded.is_commander;
+        """
+        t.execute(sql, card.get_values_tuple())
+
+
+def fetch_many_cards(cards: list, cursor=None):
+    with transaction(cursor=cursor) as t:
+        card_data = get_many_cards_from_api(cards)
+        insert_or_update_cards(card_data, cursor=t)
+        return card_data
+
+
+def get_cards_by_name(card_names: list[str], cursor=None):
+    with transaction(cursor=cursor) as t:
+        sql = (
+            "SELECT * FROM cards WHERE name IN ("
+            + ", ".join("?" * len(card_names))
+            + ")"
+        )
+        card_data = t.execute(sql, card_names).fetchall()
+        cards = []
+        for card in card_data:
+            cards.append(
+                Card(
+                    card[0],
+                    card[1],
+                    card[2],
+                    card[3],
+                    card[4],
+                    card[5],
+                    card[6],
+                    card[7],
+                    card[8],
+                    card[9],
+                    card[10],
+                )
+            )
+        return cards
+
+
+def insert_or_update_cards(cards: list, cursor=None):
+    with transaction(cursor=cursor) as t:
+        sql = """
+        INSERT INTO cards 
+        (id, name, colors, color_identity, cmc, mana_cost, image, art, legal_commanders, is_commander) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id)
+        DO UPDATE SET
+            name = excluded.name,
+            colors = excluded.colors,
+            color_identity = excluded.color_identity,
+            cmc = excluded.cmc,
+            mana_cost = excluded.mana_cost,
+            prices = excluded.prices,
+            image = excluded.image,
+            art = excluded.art,
+            legal_commanders = excluded.legal_commanders,
+            is_commander = excluded.is_commander;
+        """
+        cards = [card.get_values_tuple() for card in cards]
+        t.executemany(sql, cards)

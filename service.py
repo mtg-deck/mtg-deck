@@ -42,6 +42,7 @@ def get_deck_cards(deck_id):
             cards_data = t.execute(
                 "SELECT name FROM cards WHERE id = ?", (card[0],)
             ).fetchone()
+            print(cards_data, card)
             cards.append([card[1], cards_data[0], "COMMANDER" if card[2] else ""])
         return cards
 
@@ -69,6 +70,19 @@ def get_cards_by_deck_name(deck_name):
         """
         deck_cards = t.execute(sql, (deck_name,)).fetchall()
         return deck_cards
+
+
+def get_deck_card_by_deck_and_card_name(deck_name, card_name):
+    with transaction() as t:
+        deck_card = t.execute(
+            """SELECT deck_cards.* 
+                  FROM deck_cards 
+                  INNER JOIN cards ON deck_cards.card_id = cards.id
+                  INNER JOIN decks ON deck_cards.deck_id = decks.id
+                  WHERE decks.nome = ? AND cards.name = ?""",
+            (deck_name, card_name),
+        ).fetchone()
+        return deck_card
 
 
 def add_card_to_db(card_json):
@@ -275,13 +289,18 @@ def add_card_to_deck(deck_id, card_id, qty, cursor=None, commander=False):
         ).fetchone()
         if deck_card and not commander:
             qty = deck_card[2] + qty
+            t.execute(
+                "INSERT OR REPLACE INTO deck_cards (deck_id, card_id, quantidade, is_commander) VALUES (?, ?, ?, ?);",
+                [deck_id, card_id, qty, False],
+            )
+            return
         t.execute(
             "INSERT OR REPLACE INTO deck_cards (deck_id, card_id, quantidade, is_commander) VALUES (?, ?, ?, ?);",
-            [deck_id, card_id, qty, commander],
+            [deck_id, card_id, 1, commander],
         )
 
 
-def reset_comander_of_deck(deck_id, cursor=None):
+def reset_commander_of_deck(deck_id, cursor=None):
     with transaction(cursor=cursor) as t:
         t.execute(
             "UPDATE deck_cards SET is_commander = FALSE WHERE deck_id = ?", [deck_id]
@@ -291,5 +310,5 @@ def reset_comander_of_deck(deck_id, cursor=None):
 def set_commander(deck_id, commander_id):
     with transaction() as t:
         remove_card_from_deck(deck_id, commander_id, cursor=t)
-        reset_comander_of_deck(deck_id, cursor=t)
+        reset_commander_of_deck(deck_id, cursor=t)
         add_card_to_deck(deck_id, commander_id, 1, commander=True, cursor=t)

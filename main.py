@@ -1,13 +1,14 @@
 import click
 import re
-from config import settings
-from external.api import get_many_cards_from_api
+from shell.infra.config import settings
+from shell.external.api import get_many_cards_from_api
 import service
 import os
 import csv
 import json
 from tabulate import tabulate
-from utils import validate_txt
+from utils import validate_txt, clear_screen
+from shell.repl.repl import repl
 
 # TODO: Implementar random_card (gerar cartas aleatórias)
 # TODO: Implementar random_commander (gerar comandante aleatório)
@@ -15,8 +16,6 @@ from utils import validate_txt
 # TODO: Melhorar create_deck_from_file — validar commander dentro do .txt
 # TODO: Implementar exportação padronizada com commander no topo
 # TODO: Criar comandos de import (moxfield/archidekt/etc)
-# TODO: Criar comando para adicionar card a um deck (deck add)
-# TODO: Criar comando para remover card de um deck (deck remove)
 # TODO: Criar comando para atualizar quantidade (deck set-qty)
 # TODO: Criar comando search de cards no CLI
 # TODO: Mover prints para flags opcionais (--verbose, --quiet)
@@ -329,7 +328,7 @@ def show_deck(deck_name):
 
 
 # =======================================================================
-# deck set commander
+# deck commander
 # =======================================================================
 
 
@@ -362,6 +361,130 @@ def set_commander(deck_name, commander, force):
         service.set_commander(deck[0], commander["id"])
     except Exception as e:
         click.echo(f"Error fetching commander: {e}")
+
+
+@deck.command("reset-commander")
+@click.argument("deck_name", type=DECK_NAME)
+@click.option("--force", is_flag=True)
+def reset_commander(deck_name, force):
+    deck = service.get_deck_by_name(deck_name)
+    if not deck:
+        click.echo(f"Deck not found: {deck_name}")
+        return
+    try:
+        current_commander = service.get_commander_name_from_deck(deck[0])
+        if not current_commander:
+            click.echo(f"Deck {deck_name} has no commander.")
+            return
+        if not force and not click.confirm(
+            f"Are you sure you want to remove {current_commander} as commander of deck {deck_name}?",
+            default=True,
+        ):
+            click.echo("Aborted.")
+            return
+        click.echo(f"Removing {current_commander} as commander of deck {deck_name}.")
+        service.reset_commander_of_deck(deck[0])
+    except Exception as e:
+        click.echo(f"Error resetting commander: {e}")
+
+
+# =======================================================================
+# deck cards
+# =======================================================================
+
+
+@deck.command("add-card")
+@click.argument("deck_name", type=DECK_NAME)
+@click.argument("card_name", type=DECK_NAME)
+@click.option("--qty", type=int, required=False, default=1)
+def deck_add_card(deck_name, card_name, qty):
+    if qty == 0:
+        click.echo("Cannot add 0 cards.")
+        return
+    if qty < 0:
+        click.echo(
+            "Cannot add negative cards, to remove cards use the remove-card command."
+        )
+        return
+    try:
+        deck = service.get_deck_by_name(deck_name)
+        if not deck:
+            click.echo(f"Deck not found: {deck_name}")
+            return
+        deck_card = service.get_deck_card_by_deck_and_card_name(deck_name, card_name)
+        if deck_card and deck_card[3]:
+            click.echo("Cannot add more than one commander to a deck.")
+            return
+        card = service.get_card_by_name(card_name)
+        if not card:
+            click.echo(f"Card not found: {card_name}")
+            return
+        service.add_card_to_deck(deck[0], card["id"], qty)
+        click.echo(f"Added {qty} x {card_name} to deck {deck_name}.")
+
+        qty = qty + deck_card[2] if deck_card else 0
+
+        click.echo(f"Deck {deck_name} has {qty} x {card_name} remaining.")
+
+    except Exception as e:
+        click.echo(f"Error adding card: {e}")
+
+
+@deck.command("remove-card")
+@click.argument("deck_name", type=DECK_NAME)
+@click.argument("card_name", required=True)
+@click.option("--qty", type=int, required=False, default=1)
+@click.option("--force", is_flag=True)
+def deck_remove_card(deck_name, card_name, qty, force):
+    if qty == 0:
+        click.echo("Cannot remove 0 cards.")
+        return
+    if qty < 0:
+        click.echo(
+            "Cannot remove negative cards, to add cards use the add-card command."
+        )
+        return
+    qty = -qty
+    try:
+        deck = service.get_deck_by_name(deck_name)
+        if not deck:
+            click.echo(f"Deck not found: {deck_name}")
+            return
+
+        deck_card = service.get_deck_card_by_deck_and_card_name(deck_name, card_name)
+        if not deck_card:
+            click.echo(f"Card not found on deck: {card_name}")
+            return
+
+        if deck_card[3]:
+            click.echo(f"{card_name} is a commander.")
+            if not force and not click.confirm(
+                "Do you want to remove the commander?", default=True
+            ):
+                click.echo("Aborted.")
+                return
+
+        if -qty >= deck_card[2]:
+            click.echo(f"Deck has only {deck_card[2]} x {card_name}.")
+            if not force and not click.confirm(
+                "Do you want to remove all cards?", default=True
+            ):
+                click.echo("Aborted.")
+                return
+            click.echo(f"Removing all {card_name} from deck {deck_name}.")
+            service.remove_card_from_deck(deck[0], deck_card[1])
+            click.echo(f"Removed all {card_name} from deck {deck_name}.")
+            return
+
+        click.echo(f"Removing {-qty} x {card_name} from deck {deck_name}.")
+        service.add_card_to_deck(deck[0], deck_card[1], qty)
+
+        remaining = deck_card[2] + qty
+
+        click.echo(f"Deck {deck_name} has {remaining} x {card_name} remaining.")
+
+    except Exception as e:
+        click.echo(f"Error adding card: {e}")
 
 
 # =======================================================================
@@ -461,6 +584,18 @@ def random_card(count):
 @random.command("commander")
 def random_commander():
     pass
+
+
+# =======================================================================
+# shell
+# =======================================================================
+
+
+@cli.command()
+def shell():
+    """Run a shell."""
+    clear_screen()
+    repl()
 
 
 # =======================================================================
