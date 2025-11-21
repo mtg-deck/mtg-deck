@@ -1,3 +1,4 @@
+from commom.card_commands import CardCommands
 from .base import BaseCommand
 
 
@@ -6,4 +7,4 @@ class SearchCommand(BaseCommand):
         self.query = query
 
     def run(self, ctx):
-        print(f"[search] query={self.query}")
+        CardCommands.search(self.query)

@@ -1,5 +1,7 @@
+import click
+from commom.deck_commands import DeckCommands
 from .base import BaseCommand
-import shell.domain.deck_service as deck_service
+import domain.deck_service as deck_service
 from shell.repl.context import Context
 
 
@@ -9,14 +11,10 @@ class DeleteCommand(BaseCommand):
 
     def run(self, ctx: Context):
         if ctx.deck:
-            print("Command not supported on Deck Mode")
+            click.echo("Command not supported on Deck Mode")
             return
-        try:
-            deck = deck_service.get_deck_by_name(self.name)
-            if not deck:
-                print(f"Deck {self.name} not found")
-                return
-            deck_service.delete_deck(self.name)
-            print(f"Deck {self.name} deleted")
-        except Exception as e:
-            print("An error occurred while trying to delete deck")
+        cmd = DeckCommands.from_name(self.name)
+        if not cmd:
+            click.echo(f"Deck {self.name} not found")
+            return
+        cmd.delete()

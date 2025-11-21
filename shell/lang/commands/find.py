@@ -1,3 +1,4 @@
+from commom.card_commands import CardCommands
 from .base import BaseCommand
 
 
@@ -6,4 +7,7 @@ class FindCommand(BaseCommand):
         self.query = query
 
     def run(self, ctx):
-        print(f"[find] query={self.query}")
+        cmd = CardCommands.from_name(self.query)
+        if not cmd:
+            return
+        cmd.show()

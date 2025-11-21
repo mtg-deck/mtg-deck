@@ -1,7 +1,7 @@
-from shell.domain.deck_card import DeckCard
-from shell.domain.card import Card
-from shell.domain.deck import Deck
-from shell.infra.db import transaction
+from domain.deck_card import DeckCard
+from domain.card import Card
+from domain.deck import Deck
+from infra.db import transaction
 
 
 def get_deck_data_by_name(deck_name: str, cursor=None):
@@ -131,4 +131,21 @@ def update_deck_card_quantity(deck_card: DeckCard, cursor=None) -> None:
 def delete_deck_card(deck_card: DeckCard, cursor=None):
     with transaction(cursor=cursor) as t:
         sql = "DELETE FROM deck_cards WHERE deck_id = ? AND card_id = ?"
+        t.execute(sql, deck_card.get_values_tuple(quantidade=False, is_commander=False))
+
+
+def reset_deck_commander(deck_id: int, cursor=None):
+    with transaction(cursor=cursor) as t:
+        sql = "UPDATE deck_cards SET is_commander = 0 WHERE deck_id = ?"
+        t.execute(sql, (deck_id,))
+
+
+def set_deck_commander(deck_card: DeckCard, cursor=None):
+    assert deck_card.card is not None
+    assert deck_card.is_commander is True
+    assert deck_card.deck_id is not None
+    assert deck_card.quantidade == 1
+    with transaction(cursor=cursor) as t:
+        reset_deck_commander(deck_card.deck_id, cursor)
+        sql = "UPDATE deck_cards SET is_commander = 1, quantidade = 1 WHERE deck_id = ? AND card_id = ?"
         t.execute(sql, deck_card.get_values_tuple(quantidade=False, is_commander=False))

@@ -1,7 +1,7 @@
-from shell.infra.db import transaction
-from shell.domain.deck import Deck
-from shell.domain.deck_card import DeckCard
-import shell.domain.deck_card_service as deck_card_service
+from infra.db import transaction
+from domain.deck import Deck
+from domain.deck_card import DeckCard
+import domain.deck_card_service as deck_card_service
 
 
 def save_deck(deck: Deck, cursor=None):
@@ -100,3 +100,9 @@ def create_deck_with_cards(deck_name: str, cards, cursor=None):
             )
             deck_cards.append(dc)
         deck_card_service.add_deck_card_list(deck_cards, cursor=t)
+
+
+def get_deck_names():
+    with transaction(cursor=None) as t:
+        deck_names = t.execute("SELECT nome FROM decks").fetchall()
+        return [deck[0] for deck in deck_names]

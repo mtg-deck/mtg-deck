@@ -1,6 +1,10 @@
-from shell.external.api import get_card_from_api, get_many_cards_from_api
-from shell.infra.db import transaction
-from shell.domain.card import Card
+from external.api import (
+    get_card_from_api,
+    get_many_cards_from_api,
+    get_autocomplete_from_api,
+)
+from infra.db import transaction
+from domain.card import Card
 
 
 def get_card_by_name(card_name: str, cursor=None):
@@ -131,3 +135,16 @@ def insert_or_update_cards(cards: list, cursor=None):
         """
         cards = [card.get_values_tuple() for card in cards]
         t.executemany(sql, cards)
+
+
+def get_by_autocomplete(card_name: str, cursor=None):
+    with transaction(cursor=cursor) as t:
+        cards = get_autocomplete_from_api(card_name)
+        insert_or_update_cards(cards, cursor=t)
+        return cards
+
+
+def get_card_names():
+    with transaction(cursor=None) as t:
+        card_names = t.execute("SELECT name FROM cards").fetchall()
+        return [card[0] for card in card_names]

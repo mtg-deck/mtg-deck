@@ -1,6 +1,6 @@
 from .base import BaseCommand
 from shell.repl.context import Context
-from shell.domain.deck_card_service import get_deck_data_by_name
+from domain.deck_card_service import get_deck_data_by_name
 
 
 class SelectCommand(BaseCommand):

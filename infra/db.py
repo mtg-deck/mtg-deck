@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from shell.infra.config import settings
+from infra.config import settings
 import sqlite3
 
 

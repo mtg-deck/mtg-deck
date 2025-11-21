@@ -1,4 +1,4 @@
-from shell.domain.card import Card
+from domain.card import Card
 
 
 class DeckCard:

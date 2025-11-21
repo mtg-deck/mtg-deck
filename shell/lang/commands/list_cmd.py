@@ -1,8 +1,10 @@
 from .base import BaseCommand
 from shell.repl.context import Context
-from shell.domain.deck_service import get_decks
-from shell.domain.deck_card_service import get_deck_commanders_name
+from domain.deck_service import get_decks
+from domain.deck_card_service import get_deck_commanders_name
 from tabulate import tabulate
+from commom.deck_list_commands import DeckListCommands
+from commom.deck_card_commands import DeckCardCommands
 
 
 class ListCommand(BaseCommand):
@@ -12,27 +14,10 @@ class ListCommand(BaseCommand):
     def run(self, ctx: Context):
         if ctx.deck:
             assert ctx.deck_cards is not None
-            try:
-                deck_cards = ctx.deck_cards
-                data = [["qty", "Card Name", "Commander"]]
-                for deck_card in deck_cards:
-                    data.append(deck_card.get_list_row())
-                print(tabulate(data, headers="firstrow"))
-            except Exception as e:
-                print("Error getting deck cards")
-            return
-        try:
-            decks = get_decks(limit=self.qty)
-        except Exception:
-            print("Error getting decks")
-            return
-        data = [["#", "Name", "Commander", "Last Update"]]
-        for deck in decks:
-            try:
-                commander = get_deck_commanders_name(deck.id)
-                data.append([deck.id, deck.name, commander, deck.last_update])
-            except Exception as e:
-                print(e)
-                print(f"Error getting commander for deck {deck.name}")
+            assert ctx.deck.name is not None
+            cmd = DeckCardCommands.from_deck_name(ctx.deck.name)
+            if not cmd:
                 return
-        print(tabulate(data, headers="firstrow"))
+            cmd.show()
+            return
+        DeckListCommands.show(self.qty)

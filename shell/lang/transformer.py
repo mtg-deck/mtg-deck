@@ -21,7 +21,8 @@ from shell.lang.commands.unknown import UnknownCommand
 from shell.lang.commands.commander import CommanderCommand
 from shell.lang.commands.exit_cmd import ExitCommand
 from shell.lang.commands.base import BaseCommand
-from shell.lang.validators import validate_path
+from shell.lang.commands.clear_screen import ClearCommand
+from commom.validators import validate_path
 
 
 class CommandTransformer(Transformer):
@@ -45,12 +46,24 @@ class CommandTransformer(Transformer):
         return CopyCommand(items[0], items[1])
 
     def export_txt_cmd(self, items):
+        if not validate_path(items[0]):
+            return BaseCommand()
+        if len(items) > 1:
+            return ExportTxtCommand(items[0], items[1])
         return ExportTxtCommand(items[0])
 
     def export_csv_cmd(self, items):
+        if not validate_path(items[0]):
+            return BaseCommand()
+        if len(items) > 1:
+            return ExportCsvCommand(items[0], items[1])
         return ExportCsvCommand(items[0])
 
     def export_json_cmd(self, items):
+        if not validate_path(items[0]):
+            return BaseCommand()
+        if len(items) > 1:
+            return ExportJsonCommand(items[0], items[1])
         return ExportJsonCommand(items[0])
 
     def import_txt_cmd(self, items):
@@ -58,8 +71,10 @@ class CommandTransformer(Transformer):
             return BaseCommand()
         return ImportTxtCommand(items[0], items[1])
 
-    def export_all_cmd(self, _):
-        return ExportAllCommand()
+    def export_all_cmd(self, items):
+        if not validate_path(items[0]):
+            return BaseCommand()
+        return ExportAllCommand(items[0])
 
     def add_cmd(self, items):
         card = items[0]
@@ -102,3 +117,6 @@ class CommandTransformer(Transformer):
 
     def exit_cmd(self, _):
         return ExitCommand()
+
+    def clear_cmd(self, _):
+        return ClearCommand()

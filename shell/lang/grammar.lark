@@ -27,6 +27,8 @@
         | exit
         | find
         | search
+        | clear
+        | cls
         | DECKNAME        -> unknown
 
 select : "select" DECKNAME            -> select_cmd
@@ -39,11 +41,11 @@ delete : "delete" DECKNAME            -> delete_cmd
 del    : "del" DECKNAME               -> delete_cmd
 copy   : "copy" DECKNAME DECKNAME         -> copy_cmd
 cp     : "cp" DECKNAME DECKNAME       -> copy_cmd
-export_txt : "export_txt" DECKNAME    -> export_txt_cmd
-export_csv : "export_csv" DECKNAME    -> export_csv_cmd
-export_json : "export_json" DECKNAME  -> export_json_cmd
-import_txt : "import_txt" PATH DECKNAME    -> import_txt_cmd
-export_all : "export_all"         -> export_all_cmd
+export_txt : "export_txt" PATH DECKNAME?    -> export_txt_cmd
+export_csv : "export_csv" PATH DECKNAME?    -> export_csv_cmd
+export_json : "export_json" PATH DECKNAME?  -> export_json_cmd
+import_txt : "import_txt" PATH DECKNAME   -> import_txt_cmd
+export_all : "export_all" PATH       -> export_all_cmd
 add     : "add" CARDNAME INT?         -> add_cmd
 remove  : "remove" CARDNAME INT?      -> remove_cmd
 rmc     : "rmc" CARDNAME INT?         -> remove_cmd
@@ -56,9 +58,11 @@ find : "find" CARDNAME               -> find_cmd
 search : "search" CARDNAME           -> search_cmd
 exit : "exit"                    -> exit_cmd
 analize : "analize" DECKNAME?         -> analize_cmd
+clear : "clear"                    -> clear_cmd
+cls : "cls"                    -> clear_cmd
 
 PATH: ESCAPED_STRING
-    | /[^\s]+/
+    | /[a-zA-Z0-9_\-\/\.]+/
 DECKNAME: /[A-Za-z0-9_-]+/
 CARDNAME: ESCAPED_STRING
         | /.+?(?=\s+\d+$|$)/

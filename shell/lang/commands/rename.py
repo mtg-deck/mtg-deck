@@ -1,6 +1,6 @@
 from .base import BaseCommand
 from shell.repl.context import Context
-from shell.domain.deck_service import get_deck_by_name, rename_deck
+from domain.deck_service import get_deck_by_name, rename_deck
 
 
 class RenameCommand(BaseCommand):

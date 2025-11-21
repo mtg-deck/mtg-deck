@@ -1,4 +1,6 @@
-from shell.domain.deck import Deck
+from domain.card_service import get_card_names
+from domain.deck import Deck
+from domain.deck_service import get_deck_names
 
 
 class Context:
@@ -8,6 +10,7 @@ class Context:
 
         self.deck = deck
         self.deck_cards = deck_cards
+        self.deck_names = []
 
     def set_deck(self, deck):
         assert isinstance(deck, Deck | None)
@@ -16,3 +19,9 @@ class Context:
     def set_deck_cards(self, deck_cards):
         assert isinstance(deck_cards, list | None)
         self.deck_cards = deck_cards
+
+    def get_deck_names(self):
+        return get_deck_names()
+
+    def get_saved_card_names(self):
+        return get_card_names()
