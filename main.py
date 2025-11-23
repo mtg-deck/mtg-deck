@@ -19,10 +19,10 @@ except ImportError:
     @click.option("--logout", is_flag=True)
     @click.pass_context
     def cli(ctx, version, info, get_key, logout):
-        """mtg-commander — EDH deck builder & analyzer."""
+        """edhelper — EDH deck builder & analyzer."""
 
         if version:
-            click.echo(f"mtg-commander {settings.VERSION}")
+            click.echo(f"edhelper {settings.VERSION}")
             ctx.exit()
 
         if not settings.user_is_authenticated():
