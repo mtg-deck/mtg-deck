@@ -62,14 +62,3 @@ def get_card_by_name(name: str):
     except Exception as e:
         return {"error": str(e)}
 
-
-@router.get("/top-commanders", response_model=CardList)
-def get_top_commanders():
-    try:
-        commanders = get_commanders_from_api()
-        card_service.insert_or_update_cards(commanders)
-        return CardList(cards=commanders)
-    except HTTPException:
-        raise
-    except Exception as e:
-        return {"error": str(e)}
