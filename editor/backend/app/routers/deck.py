@@ -1,5 +1,5 @@
 from typing import Union
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from io import BytesIO, StringIO
 from domain import card_service
@@ -16,8 +16,13 @@ from commom.excptions import (
     ShortPartial,
     InvalidQuantity,
 )
+from commom.validators import validate_txt
+from external.api import get_many_cards_from_api
 import csv
 import json
+import zipfile
+import re
+from collections import defaultdict
 
 from editor.backend.app.schemas.deck import (
     CompleteDeckRead,
@@ -259,14 +264,119 @@ def export_json(id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/{id}/txt", response_model=CompleteDeckRead)
-def import_txt(id: int):
-    pass
+@router.get("/all/export")
+def export_all():
+    try:
+        decks = deck_service.get_decks()
+
+        # Create zip file in memory
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for deck in decks:
+                assert deck.name is not None
+                _, cards = deck_card_service.get_deck_data_by_name(deck.name)
+
+                # Create txt content
+                txt_lines = []
+                for card in cards:
+                    if card.is_commander:
+                        txt_lines.insert(0, f"{card.quantidade} {card.card.name}")
+                    else:
+                        txt_lines.append(f"{card.quantidade} {card.card.name}")
+
+                # Add to zip
+                zip_file.writestr(f"{deck.name}.txt", "\n".join(txt_lines))
+
+        zip_buffer.seek(0)
+
+        return StreamingResponse(
+            zip_buffer,
+            media_type="application/zip",
+            headers={"Content-Disposition": 'attachment; filename="all_decks.zip"'},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{id}/all", response_model=CompleteDeckRead)
-def export_all(id: int):
-    pass
+@router.post("/import-txt", response_model=CompleteDeckRead, status_code=201)
+def import_txt(deck_name: str = Form(...), file: UploadFile = File(...)):
+    try:
+        # Check if deck already exists (following CLI pattern)
+        existing_deck = deck_service.get_deck_by_name(deck_name)
+        if existing_deck:
+            raise DeckAlreadyExists(deck_name)
+
+        # Read file content
+        content = file.file.read().decode("utf-8")
+        lines = content.splitlines()
+
+        # Parse cards from txt
+        cards = []
+        pattern = re.compile(r"^(\d+) (.+)$")
+        errors = []
+
+        for line in lines:
+            line = line.strip()
+            if line.startswith("//"):
+                continue
+            if not line:
+                continue
+            match = pattern.match(line)
+            if not match:
+                errors.append(line)
+                continue
+            cards.append(match.groups())
+
+        if errors:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid lines in file: {', '.join(errors[:5])}",
+            )
+
+        # Get card names
+        card_names = [card[1] for card in cards]
+
+        # Get cards from database
+        card_data = card_service.get_cards_by_name(card_names)
+
+        # Fetch missing cards from API
+        if len(card_data) != len(card_names):
+            card_data_names = [card.name for card in card_data]
+            extra_cards = [card for card in card_names if card not in card_data_names]
+            extra_card_data = get_many_cards_from_api(extra_cards)
+            card_service.insert_or_update_cards(extra_card_data)
+            card_data.extend(extra_card_data)
+
+        # Create deck cards list (following CLI pattern)
+        card_list = []
+        for card in card_data:
+            for qty, name in cards:
+                if card.name == name:
+                    card_list.append({"card": card, "quantidade": int(qty)})
+                    break
+
+        # Create deck with cards (following CLI pattern)
+        deck = deck_service.create_deck_with_cards(deck_name, card_list)
+
+        # Return created deck
+        deck, deck_cards = deck_card_service.get_deck_data_by_name(deck.name)
+        return {
+            "name": deck.name,
+            "id": deck.id,
+            "last_update": deck.last_update,
+            "cards": deck_cards,
+        }
+    except HTTPException:
+        raise
+    except DeckAlreadyExists as e:
+        http_exc = convert_exception_to_http(e)
+        if http_exc:
+            raise http_exc
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{id}/analyze", response_model=dict)

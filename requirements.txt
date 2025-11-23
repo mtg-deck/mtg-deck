@@ -74,3 +74,4 @@ uvicorn==0.38.0
     # via cli (pyproject.toml)
 wcwidth==0.2.14
     # via prompt-toolkit
+python_multipart==0.0.20
