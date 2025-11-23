@@ -5,6 +5,7 @@ from external.api import (
 )
 from infra.db import transaction
 from domain.card import Card
+from commom.excptions import CardNotFound
 
 
 def get_card_by_name(card_name: str, cursor=None):
@@ -13,10 +14,13 @@ def get_card_by_name(card_name: str, cursor=None):
             "SELECT * FROM cards WHERE name = ?", (card_name,)
         ).fetchone()
         if card_data is None:
-            card = get_card_from_api(card_name)
+            try:
+                card = get_card_from_api(card_name)
+            except Exception:
+                raise CardNotFound(card_name)
 
             t.execute(
-                "INSERT INTO cards (id, name, colors, colorIdentity, cmc, mana_cost, image, art, legal_commanders, is_commander) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO cards (id, name, colors, color_identity, cmc, mana_cost, image, art, legal_commanders, is_commander, price, edhrec_rank) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 card.get_values_tuple(),
             )
 
@@ -33,14 +37,17 @@ def get_card_by_name(card_name: str, cursor=None):
                 card_data[8],
                 card_data[9],
                 card_data[10],
+                card_data[11],
             )
 
         return card
 
 
-def get_card_by_id(card_id: int, cursor=None):
+def get_card_by_id(card_id: str, cursor=None):
     with transaction(cursor=cursor) as t:
         card_data = t.execute("SELECT * FROM cards WHERE id = ?", (card_id,)).fetchone()
+        if not card_data:
+            raise CardNotFound(card_id)
         card = Card(
             card_data[0],
             card_data[1],
@@ -53,6 +60,7 @@ def get_card_by_id(card_id: int, cursor=None):
             card_data[8],
             card_data[9],
             card_data[10],
+            card_data[11],
         )
         return card
 
@@ -62,7 +70,7 @@ def insert_or_update_card(card: Card, cursor=None):
         sql = """
         INSERT INTO cards 
         (id, name, colors, color_identity, cmc, mana_cost, image, art, legal_commanders, is_commander) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id)
         DO UPDATE SET
             name = excluded.name,
@@ -70,11 +78,12 @@ def insert_or_update_card(card: Card, cursor=None):
             color_identity = excluded.color_identity,
             cmc = excluded.cmc,
             mana_cost = excluded.mana_cost,
-            prices = excluded.prices,
+            price = excluded.price,
             image = excluded.image,
             art = excluded.art,
             legal_commanders = excluded.legal_commanders,
-            is_commander = excluded.is_commander;
+            is_commander = excluded.is_commander,
+            edhrec_rank = excluded.edhrec_rank;
         """
         t.execute(sql, card.get_values_tuple())
 
@@ -109,6 +118,7 @@ def get_cards_by_name(card_names: list[str], cursor=None):
                     card[8],
                     card[9],
                     card[10],
+                    card[11],
                 )
             )
         return cards
@@ -118,8 +128,8 @@ def insert_or_update_cards(cards: list, cursor=None):
     with transaction(cursor=cursor) as t:
         sql = """
         INSERT INTO cards 
-        (id, name, colors, color_identity, cmc, mana_cost, image, art, legal_commanders, is_commander) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, name, colors, color_identity, cmc, mana_cost, image, art, legal_commanders, is_commander, price, edhrec_rank) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id)
         DO UPDATE SET
             name = excluded.name,
@@ -127,17 +137,22 @@ def insert_or_update_cards(cards: list, cursor=None):
             color_identity = excluded.color_identity,
             cmc = excluded.cmc,
             mana_cost = excluded.mana_cost,
-            prices = excluded.prices,
+            price = excluded.price,
             image = excluded.image,
             art = excluded.art,
             legal_commanders = excluded.legal_commanders,
-            is_commander = excluded.is_commander;
+            is_commander = excluded.is_commander,
+            price = excluded.price,
+            edhrec_rank = excluded.edhrec_rank;
         """
         cards = [card.get_values_tuple() for card in cards]
         t.executemany(sql, cards)
 
 
 def get_by_autocomplete(card_name: str, cursor=None):
+    from commom.excptions import ShortPartial
+    if len(card_name) < 3:
+        raise ShortPartial(card_name)
     with transaction(cursor=cursor) as t:
         cards = get_autocomplete_from_api(card_name)
         insert_or_update_cards(cards, cursor=t)

@@ -3,6 +3,16 @@ from shell.lang.parser import transformer, parser
 from .context import Context
 from prompt_toolkit.completion import Completer
 from .completer import ShellCompleter
+from commom.exception_handler import shell_handler
+from commom.excptions import (
+    CardNotFound,
+    DeckNotFound,
+    DeckAlreadyExists,
+    CardNotOnDeck,
+    CardIsCommander,
+    ShortPartial,
+    InvalidQuantity,
+)
 
 session = PromptSession()
 
@@ -43,5 +53,17 @@ def repl():
             print("\nbye")
             break
 
+        except (
+            CardNotFound,
+            DeckNotFound,
+            DeckAlreadyExists,
+            CardNotOnDeck,
+            CardIsCommander,
+            ShortPartial,
+            InvalidQuantity,
+        ) as e:
+            message = shell_handler.handle(e)
+            if message:
+                print(message)
         except Exception as e:
             print("Erro:", e)

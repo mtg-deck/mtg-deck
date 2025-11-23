@@ -2,6 +2,7 @@ from infra.db import transaction
 from domain.deck import Deck
 from domain.deck_card import DeckCard
 import domain.deck_card_service as deck_card_service
+from commom.excptions import DeckNotFound, DeckAlreadyExists
 
 
 def save_deck(deck: Deck, cursor=None):
@@ -40,6 +41,8 @@ def get_deck_by_name(deck_name: str, cursor=None):
 def get_deck_by_id(deck_id: int, cursor=None):
     with transaction(cursor=cursor) as t:
         deck_data = t.execute("SELECT * FROM decks WHERE id = ?", (deck_id,)).fetchone()
+        if not deck_data:
+            raise DeckNotFound(str(deck_id))
         deck = Deck(deck_data[0], deck_data[1], deck_data[2])
         return deck
 
@@ -100,6 +103,11 @@ def create_deck_with_cards(deck_name: str, cards, cursor=None):
             )
             deck_cards.append(dc)
         deck_card_service.add_deck_card_list(deck_cards, cursor=t)
+        deck_data = t.execute(
+            "SELECT * FROM decks WHERE nome = ?", (deck.name,)
+        ).fetchone()
+        deck = Deck(deck_data[0], deck_data[1], deck_data[2])
+        return deck
 
 
 def get_deck_names():

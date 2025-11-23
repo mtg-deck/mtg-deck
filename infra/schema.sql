@@ -1,15 +1,16 @@
 CREATE TABLE IF NOT EXISTS cards (
-	id VARCHAR NOT NULL, 
-	name VARCHAR NOT NULL, 
-	colors VARCHAR NOT NULL, 
-	color_identity VARCHAR NOT NULL, 
-	cmc INTEGER NOT NULL, 
-	mana_cost VARCHAR NOT NULL, 
-	image VARCHAR NOT NULL, 
-	art VARCHAR NOT NULL, 
-	legal_commanders BOOLEAN NOT NULL, 
-	is_commander BOOLEAN NOT NULL, 
-	price VARCHAR NOT NULL, 
+	id VARCHAR NOT NULL,
+	name VARCHAR, 
+	colors VARCHAR, 
+	color_identity VARCHAR, 
+	cmc INTEGER, 
+	mana_cost VARCHAR, 
+	image VARCHAR, 
+	art VARCHAR, 
+	legal_commanders BOOLEAN, 
+	is_commander BOOLEAN, 
+	price VARCHAR, 
+  edhrec_rank INTEGER,
 	PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS decks (

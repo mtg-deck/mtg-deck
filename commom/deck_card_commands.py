@@ -5,6 +5,13 @@ import domain.deck_card_service as deck_card_service
 from domain.deck_card import DeckCard
 import domain.card_service as card_service
 from tabulate import tabulate
+from .excptions import (
+    CardNotFound,
+    DeckNotFound,
+    CardNotOnDeck,
+    CardIsCommander,
+    InvalidQuantity,
+)
 
 
 class DeckCardCommands:
@@ -20,8 +27,7 @@ class DeckCardCommands:
 
     def create(self, card_name: str, qty: int):
         if qty <= 0:
-            click.echo("Quantity must be greater than 0.")
-            return
+            raise InvalidQuantity(qty)
         try:
             dc = self.search(card_name)
             if dc:
@@ -35,40 +41,40 @@ class DeckCardCommands:
                 f"Deck {self.deck.name} has {deck_card.quantidade} x {card_name} remaining."
             )
             return deck_card
+        except (CardNotFound, InvalidQuantity) as e:
+            raise e
         except Exception as e:
             click.echo(f"Error creating deck card: {e}", err=True)
             raise e
 
     def add(self, card_name: str, qty: int):
         if qty <= 0:
-            click.echo("Quantity must be greater than 0.")
-            return
+            raise InvalidQuantity(qty)
         dc = self.search(card_name)
         if not dc:
             return self.create(card_name, qty)
         try:
             if dc.is_commander:
-                click.echo(f"{card_name} is a commander.")
-                click.echo("Cannot add more than one commander to a deck.")
-                return
+                raise CardIsCommander(card_name)
             dc.quantidade = dc.quantidade + qty if dc.quantidade is not None else qty
             deck_card_service.update_deck_card_quantity(dc)
             click.echo(f"Added {qty} x {card_name} to deck {self.deck.name}.")
             click.echo(
                 f"Deck {self.deck.name} has {dc.quantidade} x {card_name} remaining."
             )
+        except (CardIsCommander, InvalidQuantity) as e:
+            raise e
         except Exception as e:
             click.echo(f"Error adding deck card: {e}", err=True)
             raise e
 
     def remove(self, card_name, qty: int):
         if qty <= 0:
-            click.echo("Quantity must be greater than 0.")
-            return
+            raise InvalidQuantity(qty)
         dc = self.search(card_name)
         if not dc:
-            click.echo(f"Card not found: {card_name}")
-            return
+            assert self.deck.name is not None
+            raise CardNotOnDeck(card_name, self.deck.name)
         assert dc.quantidade is not None
 
         try:
@@ -87,6 +93,8 @@ class DeckCardCommands:
             click.echo(
                 f"Deck {self.deck.name} has {dc.quantidade} x {card_name} remaining."
             )
+        except (CardNotOnDeck, InvalidQuantity) as e:
+            raise e
         except Exception as e:
             click.echo(f"Error adding deck card: {e}", err=True)
             raise e
@@ -94,8 +102,8 @@ class DeckCardCommands:
     def edit_quantity(self, card_name: str, qty: int):
         dc = self.search(card_name)
         if not dc:
-            click.echo(f"Card not found: {card_name}")
-            return
+            assert self.deck.name is not None
+            raise CardNotOnDeck(card_name, self.deck.name)
         assert dc.quantidade is not None
         if dc.quantidade == qty:
             click.echo(f"Deck {self.deck.name} has {qty} x {card_name}.")
@@ -108,16 +116,17 @@ class DeckCardCommands:
     def set_commander(self, card_name: str):
         dc = self.search(card_name)
         if not dc:
-            click.echo(f"Card not found: {card_name}")
-            return
+            assert self.deck.name is not None
+            raise CardNotOnDeck(card_name, self.deck.name)
         if dc.is_commander:
-            click.echo(f"{card_name} is already a commander.")
-            return
+            raise CardIsCommander(card_name)
         try:
             dc.quantidade = 1
             dc.is_commander = True
             deck_card_service.set_deck_commander(dc)
             click.echo(f"Set {card_name} as commander.")
+        except (CardNotOnDeck, CardIsCommander) as e:
+            raise e
         except Exception as e:
             click.echo(f"Error setting commander: {e}", err=True)
             raise e
@@ -136,10 +145,9 @@ class DeckCardCommands:
     def from_deck_name(deck_name: str):
         try:
             deck, deck_cards = deck_card_service.get_deck_data_by_name(deck_name)
-            if not deck:
-                click.echo(f"Deck not found: {deck_name}")
-                return
             return DeckCardCommands(deck, deck_cards)
+        except DeckNotFound as e:
+            raise e
         except Exception as e:
             click.echo(f"Error fetching deck: {e}", err=True)
             raise e

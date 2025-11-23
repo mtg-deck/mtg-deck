@@ -2,13 +2,14 @@ from domain.deck_card import DeckCard
 from domain.card import Card
 from domain.deck import Deck
 from infra.db import transaction
+from commom.excptions import DeckNotFound, CardNotOnDeck
 
 
 def get_deck_data_by_name(deck_name: str, cursor=None):
     with transaction(cursor=cursor) as t:
         deck = t.execute("SELECT * from decks WHERE nome = ?", (deck_name,)).fetchone()
         if not deck:
-            raise Exception(f"Deck {deck_name} not found")
+            raise DeckNotFound(deck_name)
         data = t.execute(
             """
                 SELECT deck_cards.*, cards.*
@@ -34,6 +35,7 @@ def get_deck_data_by_name(deck_name: str, cursor=None):
                     deck_card[11],
                     deck_card[12],
                     deck_card[13],
+                    deck_card[14],
                 ),
                 quantidade=deck_card[2],
                 is_commander=deck_card[3] == 1,
@@ -56,25 +58,24 @@ def get_deck_card(deck_id: int, card_id: str, cursor=None):
         ).fetchone()
         if not deck_card:
             return None
-        card = (
-            Card(
-                deck_card[3],
-                deck_card[4],
-                deck_card[5],
-                deck_card[6],
-                deck_card[7],
-                deck_card[8],
-                deck_card[9],
-                deck_card[10],
-                deck_card[11],
-                deck_card[12],
-            ),
+        card = Card(
+            deck_card[4],
+            deck_card[5],
+            deck_card[6],
+            deck_card[7],
+            deck_card[8],
+            deck_card[9],
+            deck_card[10],
+            deck_card[11],
+            deck_card[12],
+            deck_card[13],
+            deck_card[14],
         )
         deck_card = DeckCard(
             deck_id=deck_id,
             card=card,
-            quantidade=deck_card[1],
-            is_commander=deck_card[2],
+            quantidade=deck_card[2],
+            is_commander=deck_card[3] == 1,
         )
         return deck_card
 

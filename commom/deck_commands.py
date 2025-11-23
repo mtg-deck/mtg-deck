@@ -8,6 +8,7 @@ import domain.card_service as card_service
 import domain.deck_card_service as deck_card_service
 import os
 import csv
+from .excptions import DeckNotFound, DeckAlreadyExists, CardNotFound
 
 
 class DeckCommands:
@@ -23,13 +24,14 @@ class DeckCommands:
         assert self.deck is not None
         try:
             if self.exists():
-                click.echo(f"Deck {self.deck.name} already exists")
-                return
+                raise DeckAlreadyExists(self.deck.name)
             click.echo("Creating deck...")
             deck = deck_service.create_deck(self.deck)
             click.echo("Deck created")
             self.deck = deck
             self.show()
+        except (DeckAlreadyExists, DeckNotFound) as e:
+            raise e
         except Exception as e:
             click.echo(f"Error: {e}", err=True)
             raise e
@@ -39,32 +41,32 @@ class DeckCommands:
         assert self.deck.name is not None
         try:
             if self.exists():
-                click.echo(f"Deck {self.deck.name} already exists")
-                return
+                raise DeckAlreadyExists(self.deck.name)
 
             click.echo("Creating deck...")
             card = card_service.get_card_by_name(commander_name)
-            if not card:
-                click.echo(f"Commander not found: {commander_name}")
             deck_card = DeckCard(deck_id=self.deck.id, card=card, quantidade=1)
             deck_service.create_deck_with_cards(self.deck.name, [deck_card])
             click.echo("Deck created")
+        except (DeckAlreadyExists, CardNotFound) as e:
+            raise e
         except Exception as e:
             click.echo(f"Error: {e}", err=True)
+            raise e
 
     def rename(self, new_name: str):
         assert self.deck is not None
         assert self.deck.name is not None
         try:
             if not self.exists():
-                click.echo(f"Deck {self.deck.name} does not exists")
-                return
+                raise DeckNotFound(self.deck.name)
             if DeckCommands(Deck(name=new_name)).exists():
-                click.echo(f"Deck {new_name} already exists")
-                return
+                raise DeckAlreadyExists(new_name)
             click.echo(f"Renaming deck {self.deck.name} to {new_name}")
             deck_service.rename_deck(self.deck.name, new_name)
             click.echo("Deck renamed")
+        except (DeckNotFound, DeckAlreadyExists) as e:
+            raise e
         except Exception as e:
             click.echo(f"Error: {e}", err=True)
             raise e
@@ -74,11 +76,12 @@ class DeckCommands:
         assert self.deck.name is not None
         try:
             if not self.exists():
-                click.echo(f"Deck {self.deck.name} does not exists")
-                return
+                raise DeckNotFound(self.deck.name)
             click.echo(f"Deleting deck {self.deck.name}")
             deck_service.delete_deck(self.deck.name)
             click.echo("Deck deleted")
+        except DeckNotFound as e:
+            raise e
         except Exception as e:
             click.echo(f"Error: {e}", err=True)
             raise e
@@ -98,8 +101,7 @@ class DeckCommands:
         assert self.deck.name is not None
         try:
             if not self.exists():
-                click.echo(f"Deck {self.deck.name} does not exists")
-                return
+                raise DeckNotFound(self.deck.name)
             deck, deck_cards = deck_card_service.get_deck_data_by_name(self.deck.name)
             output = os.path.join(path, f"{deck.name}.txt")
 
@@ -116,6 +118,8 @@ class DeckCommands:
 
             click.echo(f"Written: {output}")
 
+        except DeckNotFound as e:
+            raise e
         except Exception as e:
             click.echo(f"Error: {e}", err=True)
             raise e
@@ -125,8 +129,7 @@ class DeckCommands:
         assert self.deck.name is not None
         try:
             if not self.exists():
-                click.echo(f"Deck {self.deck.name} does not exists")
-                return
+                raise DeckNotFound(self.deck.name)
             deck, deck_cards = deck_card_service.get_deck_data_by_name(self.deck.name)
             output = os.path.join(path, f"{deck.name}.csv")
 
@@ -145,6 +148,8 @@ class DeckCommands:
 
             click.echo(f"Written: {output}")
 
+        except DeckNotFound as e:
+            raise e
         except Exception as e:
             click.echo(f"Error: {e}", err=True)
             raise e
@@ -154,8 +159,7 @@ class DeckCommands:
         assert self.deck.name is not None
         try:
             if not self.exists():
-                click.echo(f"Deck {self.deck.name} does not exists")
-                return
+                raise DeckNotFound(self.deck.name)
             deck, deck_cards = deck_card_service.get_deck_data_by_name(self.deck.name)
             output = os.path.join(path, f"{deck.name}.json")
 
@@ -177,6 +181,8 @@ class DeckCommands:
 
             click.echo(f"Written: {output}")
 
+        except DeckNotFound as e:
+            raise e
         except Exception as e:
             click.echo(f"Error: {e}", err=True)
             raise e
@@ -188,15 +194,16 @@ class DeckCommands:
             return
         try:
             if self.exists():
-                click.echo(f"Deck {self.deck.name} already exists")
-                return
+                raise DeckAlreadyExists(self.deck.name)
             card_names = [card[1] for card in cards]
             card_data = card_service.get_cards_by_name(card_names)
             if len(card_data) != len(card_names):
+                card_data_names = [card.name for card in card_data]
                 extra_cards = [
-                    card.name for card in card_data if card.name not in card_names
+                    card for card in card_names if card not in card_data_names
                 ]
                 extra_card_data = card_service.get_many_cards_from_api(extra_cards)
+                card_service.insert_or_update_cards(extra_card_data)
                 card_data.extend(extra_card_data)
             click.echo(f"Found {len(card_data)} cards")
             card_list = []
@@ -232,15 +239,15 @@ class DeckCommands:
         assert self.deck.name is not None
         try:
             if not self.exists():
-                click.echo(f"Deck {self.deck.name} does not exists")
-                return
+                raise DeckNotFound(self.deck.name)
             other = DeckCommands.from_name(dest)
             if other.exists():
-                click.echo(f"Deck {dest} already exists")
-                return
+                raise DeckAlreadyExists(dest)
             click.echo(f"Copying deck {self.deck.name} ")
             deck_service.copy_deck(self.deck, dest)
             click.echo(f"Deck {self.deck.name} copied to {dest}")
+        except (DeckNotFound, DeckAlreadyExists) as e:
+            raise e
         except Exception as e:
             click.echo(f"Error: {e}", err=True)
             raise e

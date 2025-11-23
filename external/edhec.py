@@ -22,7 +22,7 @@ def request_json(commander_name: str):
         return None
 
 
-def get_edhec_cardlists(name):
+def get_edhrec_cardlists(name):
     name = format_commander_name(name)
     json_data = request_json(name)
     if json_data is None:

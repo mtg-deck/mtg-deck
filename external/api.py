@@ -9,7 +9,7 @@ headers = {
 
 
 def get_card_from_api(name: str) -> Card:
-    url = f"{settings.API_URL}/api/cards/{name}"
+    url = f"{settings.API_URL}/api/cards/named/{name}"
     try:
         with httpx.Client() as client:
             resp = client.get(url, headers=headers)
@@ -53,6 +53,15 @@ def get_many_cards_from_api(cards: list[str]) -> list[Card]:
         raise Exception(f"Error connecting to API: {str(e)}")
 
 
-def get_commanders_from_api() -> dict:
-    """Ainda não implementado porque falta endpoint"""
-    raise NotImplementedError("Commander endpoint not implemented yet")
+def get_commanders_from_api() -> list[Card]:
+    url = f"{settings.API_URL}/api/cards/topcommanders"
+    try:
+        with httpx.Client() as client:
+            resp = client.get(url, headers=headers)
+            resp.raise_for_status()
+            cards_final = [Card.from_dict(card) for card in resp.json()["cards"]]
+            return cards_final
+    except httpx.HTTPStatusError as e:
+        raise Exception(f"HTTP error fetching multiple cards: {e.response.status_code}")
+    except httpx.RequestError as e:
+        raise Exception(f"Error connecting to API: {str(e)}")

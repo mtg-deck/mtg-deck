@@ -2,6 +2,7 @@ import domain.card_service as card_service
 from domain.card import Card
 import click
 from tabulate import tabulate
+from .excptions import CardNotFound, ShortPartial
 
 
 class CardCommands:
@@ -10,8 +11,11 @@ class CardCommands:
 
     @staticmethod
     def search(partial: str):
+        if len(partial) < 3:
+            raise ShortPartial(partial)
         try:
             cards = card_service.get_autocomplete_from_api(partial=partial)
+            card_service.insert_or_update_cards(cards)
             data = [
                 [
                     "ID",
@@ -19,9 +23,10 @@ class CardCommands:
                     "Color",
                     "CMC",
                     "Mana Cost",
-                    "Legal Commands",
+                    "Legal Commanders",
                     "Is Commander",
                     "Price",
+                    "Edhrec Rank",
                 ]
             ]
             for card in cards:
@@ -35,6 +40,7 @@ class CardCommands:
                         card.legal_commanders,
                         card.is_commander,
                         card.price,
+                        card.edhrec_rank,
                     ]
                 )
             table = tabulate(data, headers="firstrow")
@@ -48,17 +54,14 @@ class CardCommands:
         assert self.card.name is not None
         card = card_service.get_card_by_name(self.card.name)
         if not card:
-            raise Exception(f"Card not found: {self.card.name}")
+            raise CardNotFound(self.card.name)
         self.card = card
 
     @staticmethod
     def from_name(card_name: str):
-        try:
-            card = CardCommands(Card(name=card_name))
-            card.__find()
-            return card
-        except Exception as e:
-            click.echo(f"Error: {e}", err=True)
+        card = CardCommands(Card(name=card_name))
+        card.__find()
+        return card
 
     def show(self):
         table = [
@@ -73,6 +76,10 @@ class CardCommands:
             ["Legal Commands", self.card.legal_commanders],
             ["Is Commander", self.card.is_commander],
             ["Price", self.card.price],
+            [
+                "Edhrec Rank",
+                self.card.edhrec_rank if self.card.edhrec_rank is not None else "N/A",
+            ],
         ]
         table = tabulate(table, headers="firstrow", tablefmt="fancy_grid")
         click.echo(table)

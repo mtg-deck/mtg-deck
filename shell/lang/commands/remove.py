@@ -14,6 +14,4 @@ class RemoveCommand(BaseCommand):
         assert ctx.deck_cards is not None
         assert ctx.deck.name is not None
         cmd = DeckCardCommands.from_deck_name(ctx.deck.name)
-        if not cmd:
-            return
         cmd.remove(self.card, self.qty)

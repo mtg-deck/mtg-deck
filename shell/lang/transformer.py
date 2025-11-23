@@ -22,6 +22,8 @@ from shell.lang.commands.commander import CommanderCommand
 from shell.lang.commands.exit_cmd import ExitCommand
 from shell.lang.commands.base import BaseCommand
 from shell.lang.commands.clear_screen import ClearCommand
+from shell.lang.commands.meta import MetaCommand
+from shell.lang.commands.top_commanders import TopCommandersCommand
 from commom.validators import validate_path
 
 
@@ -114,6 +116,14 @@ class CommandTransformer(Transformer):
 
     def commander_cmd(self, _):
         return CommanderCommand()
+
+    def meta_cmd(self, items):
+        if len(items) > 1:
+            return MetaCommand(items[0], items[1])
+        return MetaCommand(items[0])
+
+    def top_commanders_cmd(self, _):
+        return TopCommandersCommand()
 
     def exit_cmd(self, _):
         return ExitCommand()

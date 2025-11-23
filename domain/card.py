@@ -12,6 +12,8 @@ class Card:
         legal_commanders=None,
         is_commander=None,
         price=None,
+        edhrec_rank=None,
+        commander_rank=None,
     ):
         self.id = id
         self.name = name
@@ -24,6 +26,8 @@ class Card:
         self.legal_commanders = legal_commanders
         self.is_commander = is_commander
         self.price = price
+        self.edhrec_rank = edhrec_rank
+        self.commander_rank = commander_rank
 
     def get_values_tuple(
         self,
@@ -38,6 +42,8 @@ class Card:
         legal_commanders=True,
         is_commander=True,
         price=True,
+        edhrec_rank=True,
+        commander_rank=False,
     ):
         values = []
         if id:
@@ -62,6 +68,10 @@ class Card:
             values.append(self.is_commander)
         if price:
             values.append(self.price)
+        if edhrec_rank:
+            values.append(self.edhrec_rank)
+        if commander_rank:
+            values.append(self.commander_rank)
         return tuple(values)
 
     def __hash__(self):
@@ -88,6 +98,8 @@ class Card:
             legal_commanders=card_dict["legal_commanders"],
             is_commander=card_dict["is_commander"],
             price=card_dict["price"],
+            edhrec_rank=card_dict["edhrec_rank"],
+            commander_rank=card_dict.get("commander_rank", None),
         )
         return card
 

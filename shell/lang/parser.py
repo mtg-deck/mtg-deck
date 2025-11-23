@@ -1,8 +1,9 @@
 from lark import Lark
 from shell.lang.transformer import CommandTransformer
 from pathlib import Path
+from infra.config import settings
 
-grammar = Path(__file__).with_name("grammar.lark").read_text()
+grammar = Path(settings.BASE_PATH + "/shell/lang/grammar.lark").read_text()
 parser = Lark(grammar, parser="lalr")
 
 transformer = CommandTransformer()

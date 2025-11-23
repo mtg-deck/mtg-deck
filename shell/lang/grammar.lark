@@ -22,6 +22,8 @@
         | reset_commander
         | set_commander
         | commander
+        | meta
+        | top_commanders
         | list
         | ls
         | exit
@@ -52,6 +54,8 @@ rmc     : "rmc" CARDNAME INT?         -> remove_cmd
 reset_commander : "reset-commander" -> reset_cmd
 commander : "commander"           -> commander_cmd
 set_commander : "set-commander" CARDNAME -> set_cmd
+meta : "meta" CARDNAME CARDNAME?  -> meta_cmd
+top_commanders : "top-commanders"  -> top_commanders_cmd
 list : "list" INT?                -> list_cmd
 ls : "ls" INT?                    -> list_cmd
 find : "find" CARDNAME               -> find_cmd
