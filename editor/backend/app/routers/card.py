@@ -28,7 +28,7 @@ def autocomplete_cards(partial: str):
             raise http_exc
         raise
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{card_id}", response_model=Card)
@@ -44,7 +44,7 @@ def get_card(card_id: str):
             raise http_exc
         raise
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/named/{name}", response_model=Card)
@@ -60,5 +60,5 @@ def get_card_by_name(name: str):
             raise http_exc
         raise
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 

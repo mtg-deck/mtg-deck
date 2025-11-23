@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from editor.backend.app.routers.deck import router as deck_router
 from editor.backend.app.routers.card import router as card_router
 from editor.backend.app.routers.commander import router as commander_router
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from infra.config import settings
 
@@ -9,6 +10,16 @@ from infra.config import settings
 app = FastAPI(
     title="MTG Commanders App",
     version="0.1.0",
+)
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

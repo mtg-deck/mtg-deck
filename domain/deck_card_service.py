@@ -17,6 +17,7 @@ def get_deck_data_by_name(deck_name: str, cursor=None):
                 INNER JOIN cards ON cards.id = deck_cards.card_id
                 INNER JOIN decks ON decks.id = deck_cards.deck_id
                 WHERE decks.nome = ?
+                ORDER by deck_cards.is_commander DESC
                 """,
             (deck[1],),
         ).fetchall()

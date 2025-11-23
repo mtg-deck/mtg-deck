@@ -41,7 +41,7 @@ def get_top_commanders():
     except HTTPException:
         raise
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{name}/meta", response_model=dict)
@@ -100,4 +100,4 @@ def get_commander_meta(name: str, category: str | None = None):
     except HTTPException:
         raise
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))

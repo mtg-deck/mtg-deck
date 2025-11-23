@@ -1,3 +1,4 @@
+from typing import Union
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from io import BytesIO, StringIO
@@ -54,7 +55,7 @@ def list_decks():
         decks = deck_service.get_decks()
         return DeckList(decks=decks)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{id}", response_model=CompleteDeckRead)
@@ -78,7 +79,7 @@ def get_deck(id: int):
             raise http_exc
         raise
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/", response_model=DeckInDB, status_code=201)
@@ -106,7 +107,7 @@ def create_deck(new_deck: DeckCreate):
             raise http_exc
         raise
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.put("/{id}", response_model=DeckInDB)
@@ -127,7 +128,7 @@ def rename_deck(id: int, data: DeckUpdate):
             raise http_exc
         raise
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/{id}", status_code=204)
@@ -145,7 +146,7 @@ def delete_deck(id: int):
             raise http_exc
         raise
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/{id}/copy", response_model=DeckInDB, status_code=201)
@@ -164,7 +165,7 @@ def copy_deck(id: int, dest: DeckUpdate):
     except HTTPException as e:
         raise e
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{id}/txt")
@@ -191,7 +192,7 @@ def export_txt(id: int):
     except HTTPException as e:
         raise e
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{id}/csv")
@@ -224,7 +225,7 @@ def export_csv(id: int):
     except HTTPException as e:
         raise e
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
@@ -255,7 +256,7 @@ def export_json(id: int):
     except HTTPException as e:
         raise e
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/{id}/txt", response_model=CompleteDeckRead)
@@ -306,7 +307,7 @@ def add_card(id: int, body: DeckQuantity):
             raise http_exc
         raise
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/{id}/remove", response_model=FullDeckCards)
@@ -338,7 +339,7 @@ def remove_card(id: int, body: DeckQuantity):
             raise http_exc
         raise
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/{id}/commander", status_code=204)
@@ -350,7 +351,7 @@ def reset_commander(id: int):
         assert deck.id is not None, "Deck should have a id"
         deck_card_service.reset_deck_commander(deck.id)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/{id}/commander", response_model=FullDeckCards)
@@ -363,6 +364,8 @@ def set_commander(id: int, card_id: str):
         if not dc:
             assert deck.name is not None
             raise CardNotOnDeck(card.name, deck.name)
+        dc.is_commander = True
+        dc.quantidade = 1
         deck_card_service.set_deck_commander(dc)
         return dc
     except HTTPException:
@@ -373,7 +376,7 @@ def set_commander(id: int, card_id: str):
             raise http_exc
         raise
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{id}/commander", response_model=FullDeckCards)
@@ -393,4 +396,4 @@ def get_commander(id: int):
     except HTTPException as e:
         raise e
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
