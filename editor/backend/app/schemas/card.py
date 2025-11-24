@@ -8,9 +8,9 @@ class Card(BaseModel):
     colors: str
     color_identity: str
     cmc: int
-    mana_cost: str
-    image: str
-    art: str
+    mana_cost: Optional[str] = ""
+    image: Optional[str] = ""
+    art: Optional[str] = ""
     legal_commanders: bool
     is_commander: bool
     price: str
