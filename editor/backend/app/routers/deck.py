@@ -380,8 +380,43 @@ def import_txt(deck_name: str = Form(...), file: UploadFile = File(...)):
 
 
 @router.get("/{id}/analyze", response_model=dict)
-def analize_deck(id: int):
-    pass
+def analyze_deck(id: int):
+    try:
+        deck = deck_service.get_deck_by_id(id)
+        assert deck.name is not None, "Deck should have a name"
+        deck, deck_cards = deck_card_service.get_deck_data_by_name(deck.name)
+        
+        from commom.deck_analyzer import analyze_commander_rules
+        result = analyze_commander_rules(deck_cards)
+        
+        commander_data = None
+        if result["commander"]:
+            commander = result["commander"]
+            commander_data = {
+                "id": commander.id,
+                "name": commander.name,
+                "color_identity": commander.color_identity,
+            }
+        
+        return {
+            "deck_id": deck.id,
+            "deck_name": deck.name,
+            "valid": result["valid"],
+            "total_cards": result["total_cards"],
+            "commander": commander_data,
+            "commander_color_identity": result.get("commander_color_identity"),
+            "errors": result["errors"],
+            "warnings": result["warnings"],
+        }
+    except HTTPException:
+        raise
+    except DeckNotFound as e:
+        http_exc = convert_exception_to_http(e)
+        if http_exc:
+            raise http_exc
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/{id}/add", response_model=FullDeckCards)

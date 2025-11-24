@@ -24,6 +24,7 @@ from shell.lang.commands.base import BaseCommand
 from shell.lang.commands.clear_screen import ClearCommand
 from shell.lang.commands.meta import MetaCommand
 from shell.lang.commands.top_commanders import TopCommandersCommand
+from shell.lang.commands.analyze import AnalizeCommand
 from commom.validators import validate_path
 
 
@@ -130,3 +131,8 @@ class CommandTransformer(Transformer):
 
     def clear_cmd(self, _):
         return ClearCommand()
+
+    def analyze_cmd(self, items):
+        if len(items) == 0:
+            return AnalizeCommand()
+        return AnalizeCommand(items[0])

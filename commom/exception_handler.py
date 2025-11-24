@@ -41,7 +41,7 @@ class ExceptionHandler:
             click.echo(f"Error: Card '{exc.card_name}' not found.", err=True)
         elif self.mode == self.MODE_SHELL:
             return f"Card '{exc.card_name}' not found"
-        else:  
+        else:
             return exc.message
         return exc.message
 
@@ -50,7 +50,7 @@ class ExceptionHandler:
             click.echo(f"Error: Deck '{exc.deck_name}' not found.", err=True)
         elif self.mode == self.MODE_SHELL:
             return f"Deck '{exc.deck_name}' not found"
-        else: 
+        else:
             return exc.message
         return exc.message
 
@@ -59,7 +59,7 @@ class ExceptionHandler:
             click.echo(f"Error: Deck '{exc.deck_name}' already exists.", err=True)
         elif self.mode == self.MODE_SHELL:
             return f"Deck '{exc.deck_name}' already exists"
-        else:  
+        else:
             return exc.message
         return exc.message
 
@@ -71,7 +71,7 @@ class ExceptionHandler:
             )
         elif self.mode == self.MODE_SHELL:
             return f"Card '{exc.card_name}' not on deck '{exc.deck_name}'"
-        else:  
+        else:
             return exc.message
         return exc.message
 
@@ -80,7 +80,7 @@ class ExceptionHandler:
             click.echo(f"Error: Card '{exc.card_name}' is a commander.", err=True)
         elif self.mode == self.MODE_SHELL:
             return f"Card '{exc.card_name}' is a commander"
-        else:  
+        else:
             return exc.message
         return exc.message
 
@@ -89,7 +89,7 @@ class ExceptionHandler:
             click.echo(f"Error: {exc.message}", err=True)
         elif self.mode == self.MODE_SHELL:
             return exc.message
-        else:  
+        else:
             return exc.message
         return exc.message
 
@@ -98,7 +98,7 @@ class ExceptionHandler:
             click.echo(f"Error: {exc.message}", err=True)
         elif self.mode == self.MODE_SHELL:
             return exc.message
-        else: 
+        else:
             return exc.message
         return exc.message
 
@@ -106,4 +106,3 @@ class ExceptionHandler:
 cli_handler = ExceptionHandler(ExceptionHandler.MODE_CLI)
 shell_handler = ExceptionHandler(ExceptionHandler.MODE_SHELL)
 editor_handler = ExceptionHandler(ExceptionHandler.MODE_EDITOR)
-

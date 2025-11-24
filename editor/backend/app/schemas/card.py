@@ -15,6 +15,7 @@ class Card(BaseModel):
     is_commander: bool
     price: str
     edhrec_rank: Optional[int] = None
+    type_line: Optional[str] = None
 
     class Config:
         from_attributes = True

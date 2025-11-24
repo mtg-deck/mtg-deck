@@ -20,11 +20,12 @@ def get_card_by_name(card_name: str, cursor=None):
                 raise CardNotFound(card_name)
 
             t.execute(
-                "INSERT INTO cards (id, name, colors, color_identity, cmc, mana_cost, image, art, legal_commanders, is_commander, price, edhrec_rank) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO cards (id, name, colors, color_identity, cmc, mana_cost, image, art, legal_commanders, is_commander, price, edhrec_rank, type_line) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 card.get_values_tuple(),
             )
 
         else:
+            print(card_data)
             card = Card(
                 card_data[0],
                 card_data[1],
@@ -38,8 +39,10 @@ def get_card_by_name(card_name: str, cursor=None):
                 card_data[9],
                 card_data[10],
                 card_data[11],
+                None,
+                card_data[12],
             )
-
+            print(card.get_values_tuple())
         return card
 
 
@@ -61,6 +64,8 @@ def get_card_by_id(card_id: str, cursor=None):
             card_data[9],
             card_data[10],
             card_data[11],
+            None,
+            card_data[12],
         )
         return card
 
@@ -69,8 +74,8 @@ def insert_or_update_card(card: Card, cursor=None):
     with transaction(cursor=cursor) as t:
         sql = """
         INSERT INTO cards 
-        (id, name, colors, color_identity, cmc, mana_cost, image, art, legal_commanders, is_commander) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, name, colors, color_identity, cmc, mana_cost, image, art, legal_commanders, is_commander, price, edhrec_rank, type_line) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id)
         DO UPDATE SET
             name = excluded.name,
@@ -83,7 +88,8 @@ def insert_or_update_card(card: Card, cursor=None):
             art = excluded.art,
             legal_commanders = excluded.legal_commanders,
             is_commander = excluded.is_commander,
-            edhrec_rank = excluded.edhrec_rank;
+            edhrec_rank = excluded.edhrec_rank,
+            type_line = excluded.type_line;
         """
         t.execute(sql, card.get_values_tuple())
 
@@ -119,6 +125,7 @@ def get_cards_by_name(card_names: list[str], cursor=None):
                     card[9],
                     card[10],
                     card[11],
+                    card[12] if len(card) > 12 else None,
                 )
             )
         return cards
@@ -128,8 +135,8 @@ def insert_or_update_cards(cards: list, cursor=None):
     with transaction(cursor=cursor) as t:
         sql = """
         INSERT INTO cards 
-        (id, name, colors, color_identity, cmc, mana_cost, image, art, legal_commanders, is_commander, price, edhrec_rank) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, name, colors, color_identity, cmc, mana_cost, image, art, legal_commanders, is_commander, price, edhrec_rank, type_line) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id)
         DO UPDATE SET
             name = excluded.name,
@@ -143,7 +150,8 @@ def insert_or_update_cards(cards: list, cursor=None):
             legal_commanders = excluded.legal_commanders,
             is_commander = excluded.is_commander,
             price = excluded.price,
-            edhrec_rank = excluded.edhrec_rank;
+            edhrec_rank = excluded.edhrec_rank,
+            type_line = excluded.type_line;
         """
         cards = [card.get_values_tuple() for card in cards]
         t.executemany(sql, cards)
@@ -151,6 +159,7 @@ def insert_or_update_cards(cards: list, cursor=None):
 
 def get_by_autocomplete(card_name: str, cursor=None):
     from commom.excptions import ShortPartial
+
     if len(card_name) < 3:
         raise ShortPartial(card_name)
     with transaction(cursor=cursor) as t:

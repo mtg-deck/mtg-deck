@@ -20,6 +20,7 @@ class CardCommands:
                 [
                     "ID",
                     "Name",
+                    "Type Line",
                     "Color",
                     "CMC",
                     "Mana Cost",
@@ -34,6 +35,7 @@ class CardCommands:
                     [
                         card.id,
                         card.name,
+                        card.type_line,
                         card.colors,
                         card.cmc,
                         card.mana_cost,
@@ -67,6 +69,10 @@ class CardCommands:
         table = [
             ["ID", self.card.id if self.card.id is not None else ""],
             ["Name", self.card.name],
+            [
+                "Type Line",
+                self.card.type_line if self.card.type_line is not None else "",
+            ],
             ["Color", self.card.colors],
             ["Color Identity", self.card.color_identity],
             ["CMC", self.card.cmc],

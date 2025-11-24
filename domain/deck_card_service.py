@@ -26,17 +26,20 @@ def get_deck_data_by_name(deck_name: str, cursor=None):
             dc = DeckCard(
                 deck_id=deck[0],
                 card=Card(
-                    deck_card[4],
-                    deck_card[5],
-                    deck_card[6],
-                    deck_card[7],
-                    deck_card[8],
-                    deck_card[9],
-                    deck_card[10],
-                    deck_card[11],
-                    deck_card[12],
-                    deck_card[13],
-                    deck_card[14],
+                    deck_card[4],  # id
+                    deck_card[5],  # name
+                    deck_card[6],  # colors
+                    deck_card[7],  # color_identity
+                    deck_card[8],  # cmc
+                    deck_card[9],  # mana_cost
+                    deck_card[10],  # image
+                    deck_card[11],  # art
+                    deck_card[12],  # legal_commanders
+                    deck_card[13],  # is_commander
+                    deck_card[14],  # price
+                    deck_card[15],  # edhrec_rank
+                    None,  # commander_rank
+                    deck_card[16] if len(deck_card) > 16 else None,  # type_line
                 ),
                 quantidade=deck_card[2],
                 is_commander=deck_card[3] == 1,
@@ -60,17 +63,20 @@ def get_deck_card(deck_id: int, card_id: str, cursor=None):
         if not deck_card:
             return None
         card = Card(
-            deck_card[4],
-            deck_card[5],
-            deck_card[6],
-            deck_card[7],
-            deck_card[8],
-            deck_card[9],
-            deck_card[10],
-            deck_card[11],
-            deck_card[12],
-            deck_card[13],
-            deck_card[14],
+            deck_card[4],  # id
+            deck_card[5],  # name
+            deck_card[6],  # colors
+            deck_card[7],  # color_identity
+            deck_card[8],  # cmc
+            deck_card[9],  # mana_cost
+            deck_card[10],  # image
+            deck_card[11],  # art
+            deck_card[12],  # legal_commanders
+            deck_card[13],  # is_commander
+            deck_card[14],  # price
+            deck_card[15],  # edhrec_rank
+            None,  # commander_rank
+            deck_card[16] if len(deck_card) > 16 else None,  # type_line
         )
         deck_card = DeckCard(
             deck_id=deck_id,

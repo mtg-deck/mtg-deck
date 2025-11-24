@@ -251,3 +251,36 @@ class DeckCommands:
         except Exception as e:
             click.echo(f"Error: {e}", err=True)
             raise e
+
+    def analyze(self):
+        assert self.deck is not None
+        assert self.deck.name is not None
+        try:
+            if not self.exists():
+                raise DeckNotFound(self.deck.name)
+            from commom.deck_analyzer import analyze_commander_rules
+
+            deck, deck_cards = deck_card_service.get_deck_data_by_name(self.deck.name)
+            if deck is None:
+                raise DeckNotFound(self.deck.name)
+            result = analyze_commander_rules(deck_cards)
+
+            click.echo(f"Commander: {result['commander']}")
+            click.echo(f"Color Identity: {result.get('commander_color_identity')}")
+            click.echo(f"Total Cards: {result['total_cards']}")
+            click.echo(f"Valid: {'Yes' if result['valid'] else 'No'}")
+
+            if result["errors"]:
+                click.echo("\nErrors:", err=True)
+                for error in result["errors"]:
+                    click.echo(f"  - {error}", err=True)
+
+            if result["warnings"]:
+                click.echo("\nWarnings:")
+                for warning in result["warnings"]:
+                    click.echo(f"  - {warning}")
+        except DeckNotFound as e:
+            raise e
+        except Exception as e:
+            click.echo(f"Error: {e}", err=True)
+            raise e

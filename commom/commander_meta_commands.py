@@ -72,6 +72,7 @@ class CommanderMetaCommands:
             data = [
                 [
                     "Name",
+                    "Type Line",
                     "Color",
                     "CMC",
                     "Mana Cost",
@@ -83,6 +84,7 @@ class CommanderMetaCommands:
                 data.append(
                     [
                         card.name,
+                        card.type_line,
                         card.colors,
                         card.cmc,
                         card.mana_cost,

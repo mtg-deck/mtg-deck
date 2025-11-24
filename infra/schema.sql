@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS cards (
 	is_commander BOOLEAN, 
 	price VARCHAR, 
   edhrec_rank INTEGER,
+	type_line VARCHAR,
 	PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS decks (

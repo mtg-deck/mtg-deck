@@ -36,7 +36,7 @@ DECK_COMMANDS = [
     "export_txt",
     "export_csv",
     "export_json",
-    "analize",
+    "analyze",
     "list",
     "ls",
     "exit",
@@ -125,5 +125,5 @@ class ShellCompleter(Completer):
                         yield Completion(deck, start_position=-len(arg))
                 return
 
-        if cmd in ["list", "ls", "analize"]:
+        if cmd in ["list", "ls", "analyze"]:
             return

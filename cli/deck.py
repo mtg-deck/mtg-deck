@@ -140,3 +140,11 @@ def register_deck_commands(cli_group):
         cmd = DeckCardCommands.from_deck_name(deck_name)
         cmd.edit_quantity(card_name, qty)
 
+    @deck.command("analyze")
+    @click.argument("deck_name", type=DECK_NAME)
+    @handle_cli_exceptions
+    def analyze_deck(deck_name):
+        """Analyze if deck follows Commander format rules."""
+        cmd = DeckCommands.from_name(deck_name)
+        cmd.analyze()
+

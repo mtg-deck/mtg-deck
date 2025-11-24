@@ -8,6 +8,4 @@ class FindCommand(BaseCommand):
 
     def run(self, ctx):
         cmd = CardCommands.from_name(self.query)
-        if not cmd:
-            return
         cmd.show()

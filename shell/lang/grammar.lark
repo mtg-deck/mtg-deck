@@ -16,7 +16,7 @@
         | import_txt
         | export_all
         | add
-        | analize
+        | analyze
         | remove
         | rmc
         | reset_commander
@@ -61,7 +61,7 @@ ls : "ls" INT?                    -> list_cmd
 find : "find" CARDNAME               -> find_cmd
 search : "search" CARDNAME           -> search_cmd
 exit : "exit"                    -> exit_cmd
-analize : "analize" DECKNAME?         -> analize_cmd
+analyze : "analyze" DECKNAME?         -> analyze_cmd
 clear : "clear"                    -> clear_cmd
 cls : "cls"                    -> clear_cmd
 
