@@ -26,11 +26,18 @@ from shell.lang.commands.meta import MetaCommand
 from shell.lang.commands.top_commanders import TopCommandersCommand
 from shell.lang.commands.analyze import AnalizeCommand
 from commom.validators import validate_path
+import ast
 
 
 class CommandTransformer(Transformer):
     WORD = str
-    DECKNAME = str
+
+    def DECKNAME(self, token):
+        s = str(token)
+        if s.startswith('"') or s.startswith("'"):
+            return ast.literal_eval(s)  # remove quotes corretamente
+        return s
+
     INT = int
 
     def select_cmd(self, items):

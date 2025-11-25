@@ -63,11 +63,12 @@ search : "search" CARDNAME           -> search_cmd
 exit : "exit"                    -> exit_cmd
 analyze : "analyze" DECKNAME?         -> analyze_cmd
 clear : "clear"                    -> clear_cmd
-cls : "cls"                    -> clear_cmd
+cls : "cls"                       -> clear_cmd
 
 PATH: ESCAPED_STRING
     | /[a-zA-Z0-9_\-\/\.]+/
-DECKNAME: /[A-Za-z0-9_-]+/
+DECKNAME: ESCAPED_STRING
+        | /[A-Za-z0-9_-]+/
 CARDNAME: ESCAPED_STRING
         | /.+?(?=\s+\d+$|$)/
 
