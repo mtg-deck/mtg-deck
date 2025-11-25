@@ -14,7 +14,22 @@ from commom.excptions import (
     InvalidQuantity,
 )
 
-session = PromptSession()
+from prompt_toolkit.lexers import PygmentsLexer
+from .highlighter import ShellLexer
+from prompt_toolkit.styles import Style
+
+style = Style.from_dict(
+    {
+        "pygments.keyword": "bold #00afff",
+        "pygments.string": "#afff00",
+        "pygments.name": "#ffaf00",
+    }
+)
+
+session = PromptSession(
+    lexer=PygmentsLexer(ShellLexer),
+    style=style,
+)
 
 
 def repl():
