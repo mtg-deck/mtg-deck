@@ -79,8 +79,8 @@ class CardCommands:
             ["Mana Cost", self.card.mana_cost],
             ["Image URL", self.card.image],
             ["Art URL", self.card.art],
-            ["Legal Commands", self.card.legal_commanders],
-            ["Is Commander", self.card.is_commander],
+            ["Legal Commands", self.card.legal_commanders == 1],
+            ["Is Commander", self.card.is_commander == 1],
             ["Price", self.card.price],
             [
                 "Edhrec Rank",

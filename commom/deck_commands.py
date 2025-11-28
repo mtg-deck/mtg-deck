@@ -190,7 +190,7 @@ class DeckCommands:
     def import_txt(self, filename):
         cards, errors = validate_txt(filename)
         if errors:
-            click.echo(f"Found errors in file:\n{'\n'.join(errors)}", err=True)
+            click.echo("Found errors in file:\n" + "\n".join(errors), err=True)
             return
         try:
             if self.exists():

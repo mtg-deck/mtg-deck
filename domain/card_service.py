@@ -25,7 +25,6 @@ def get_card_by_name(card_name: str, cursor=None):
             )
 
         else:
-            print(card_data)
             card = Card(
                 card_data[0],
                 card_data[1],
@@ -42,7 +41,6 @@ def get_card_by_name(card_name: str, cursor=None):
                 None,
                 card_data[12],
             )
-            print(card.get_values_tuple())
         return card
 
 

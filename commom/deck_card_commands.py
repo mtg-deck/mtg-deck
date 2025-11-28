@@ -155,14 +155,15 @@ class DeckCardCommands:
     def show(self):
         assert self.deck is not None, "Deck should be set"
         assert self.deck_cards is not None, "Deck cards should be set"
-        data = [["Qty", "Card", "Commander"]]
+        data = [["Qty", "Card", "Price", "Commander"]]
         for dc in self.deck_cards:
             assert dc.card is not None
             assert dc.quantidade is not None
             assert dc.is_commander is not None
+            price = dc.card.price if dc.card and dc.card.price else ""
             if dc.is_commander:
-                data.insert(1, [dc.quantidade, dc.card.name, "COMMANDER"])
+                data.insert(1, [dc.quantidade, dc.card.name, price, "COMMANDER"])
                 continue
-            data.append([dc.quantidade, dc.card.name, ""])
+            data.append([dc.quantidade, dc.card.name, price, ""])
         table = tabulate(data, headers="firstrow", tablefmt="pipe")
         click.echo(table)
