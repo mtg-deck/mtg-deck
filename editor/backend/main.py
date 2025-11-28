@@ -29,9 +29,8 @@ app.include_router(card_router)
 app.include_router(deck_router)
 app.include_router(commander_router)
 
-app.mount(
-    "/",
-    StaticFiles(directory=settings.BASE_PATH + "/editor/frontend/dist", html=True),
-    name="Deck Editor",
-)
-
+# app.mount(
+#     "/",
+#     StaticFiles(directory=settings.BASE_PATH + "/editor/frontend/dist", html=True),
+#     name="Deck Editor",
+# )

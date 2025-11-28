@@ -9,6 +9,7 @@ router = APIRouter(prefix="/api/commander", tags=["commander"])
 
 CATEGORIES = [
     "New Cards",
+    "Basic Lands",
     "High Synergy Cards",
     "Top Cards",
     "Game Changers",
@@ -54,22 +55,36 @@ def get_commander_meta(name: str, category: str | None = None):
                 status_code=404, detail=f"No meta data found for commander {name}"
             )
 
-        if category is None:
+        if category != "Basic Lands" and category not in card_list:
             available_categories = [cat for cat in CATEGORIES if cat in card_list]
-            return {
-                "commander": name,
-                "available_categories": available_categories,
-                "message": "Please specify a category. Available categories listed above.",
-            }
-
-        if category not in card_list:
-            available_categories = [cat for cat in CATEGORIES if cat in card_list]
+            available_categories.append("Basic Lands")
             raise HTTPException(
                 status_code=400,
                 detail=f"Category '{category}' not found. Available categories: {', '.join(available_categories)}",
             )
 
-        card_names = card_list[category]
+        if category == "Basic Lands":
+            card = card_service.get_card_by_name(name)
+            if not card:
+                raise CardNotFound(name)
+            card_ci = card.color_identity
+            card_names = []
+            if card_ci is not None:
+                if "W" in card_ci:
+                    card_names.append("Plains")
+                if "U" in card_ci:
+                    card_names.append("Swamp")
+                if "B" in card_ci:
+                    card_names.append("Island")
+                if "R" in card_ci:
+                    card_names.append("Mountain")
+                if "G" in card_ci:
+                    card_names.append("Forest")
+        else:
+            card_names = card_list[category]
+        print("==============================")
+        print(card_names)
+        print("==============================")
         if not card_names:
             return {"commander": name, "category": category, "cards": []}
 

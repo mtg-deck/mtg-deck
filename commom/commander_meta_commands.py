@@ -1,11 +1,14 @@
 import click
 from tabulate import tabulate
+from commom.card_commands import CardCommands
 from external.edhec import get_edhrec_cardlists
 from external.api import get_many_cards_from_api
 import domain.card_service as card_service
+from .excptions import CardNotFound
 
 CATEGORIES = [
     "New Cards",
+    "Basic Lands",
     "High Synergy Cards",
     "Top Cards",
     "Game Changers",
@@ -25,6 +28,11 @@ class CommanderMetaCommands:
     @staticmethod
     def get_meta(commander_name: str, category: str | None = None):
         try:
+            commander_card_cmd = CardCommands.from_name(commander_name)
+            if not commander_card_cmd:
+                raise CardNotFound(commander_name)
+            card = commander_card_cmd.card
+            color_identity = card.color_identity
             card_list = get_edhrec_cardlists(commander_name)
 
             if not card_list:
