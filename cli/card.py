@@ -4,6 +4,7 @@ Comandos relacionados a cards.
 import click
 from commom.card_commands import CardCommands
 from commom.top_commanders_commands import TopCommandersCommands
+from commom.sync_db_commands import SyncDbCommands
 from .utils import handle_cli_exceptions
 
 
@@ -33,4 +34,10 @@ def register_card_commands(cli_group):
     def top_commanders():
         """List the top 100 commanders."""
         TopCommandersCommands.show_top_commanders()
+
+    @card.command("sync-db")
+    @handle_cli_exceptions
+    def sync_db():
+        """Sync all cards in database with API."""
+        SyncDbCommands.sync_database()
 

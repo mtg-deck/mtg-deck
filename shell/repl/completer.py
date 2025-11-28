@@ -23,6 +23,7 @@ ROOT_COMMANDS = [
     "search",
     "meta",
     "top-commanders",
+    "sync-db",
     "exit",
     "clear",
     "cls",

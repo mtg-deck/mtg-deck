@@ -25,6 +25,7 @@ from shell.lang.commands.clear_screen import ClearCommand
 from shell.lang.commands.meta import MetaCommand
 from shell.lang.commands.top_commanders import TopCommandersCommand
 from shell.lang.commands.analyze import AnalizeCommand
+from shell.lang.commands.sync_db import SyncDbCommand
 from commom.validators import validate_path
 import ast
 
@@ -143,3 +144,6 @@ class CommandTransformer(Transformer):
         if len(items) == 0:
             return AnalizeCommand()
         return AnalizeCommand(items[0])
+
+    def sync_db_cmd(self, _):
+        return SyncDbCommand()

@@ -24,6 +24,7 @@
         | commander
         | meta
         | top_commanders
+        | sync_db
         | list
         | ls
         | exit
@@ -56,6 +57,7 @@ commander : "commander"           -> commander_cmd
 set_commander : "set-commander" CARDNAME -> set_cmd
 meta : "meta" CARDNAME CARDNAME?  -> meta_cmd
 top_commanders : "top-commanders"  -> top_commanders_cmd
+sync_db : "sync-db"               -> sync_db_cmd
 list : "list" INT?                -> list_cmd
 ls : "ls" INT?                    -> list_cmd
 find : "find" CARDNAME               -> find_cmd
