@@ -51,13 +51,7 @@ except ImportError:
         ]
 
         backend = subprocess.Popen(BACKEND_CMD)
-        try:
-            import webview
-
-            webview.create_window("My Web App", "https://www.python.org")
-            webview.start()
-        except:
-            webbrowser.open("0.0.0.0:3839")
+        webbrowser.open("0.0.0.0:3839")
 
         click.echo(f"Backend PID: {backend.pid}")
 
