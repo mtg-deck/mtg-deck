@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from io import BytesIO, StringIO
 from domain import card_service
+from editor.backend.app.schemas.card import SetCommander
 from domain.deck import Deck
 from domain.deck_card import DeckCard
 import domain.deck_service as deck_service
@@ -16,13 +17,11 @@ from commom.excptions import (
     ShortPartial,
     InvalidQuantity,
 )
-from commom.validators import validate_txt
 from external.api import get_many_cards_from_api
 import csv
 import json
 import zipfile
 import re
-from collections import defaultdict
 
 from editor.backend.app.schemas.deck import (
     CompleteDeckRead,
@@ -385,10 +384,11 @@ def analyze_deck(id: int):
         deck = deck_service.get_deck_by_id(id)
         assert deck.name is not None, "Deck should have a name"
         deck, deck_cards = deck_card_service.get_deck_data_by_name(deck.name)
-        
+
         from commom.deck_analyzer import analyze_commander_rules
+
         result = analyze_commander_rules(deck_cards)
-        
+
         commander_data = None
         if result["commander"]:
             commander = result["commander"]
@@ -397,7 +397,7 @@ def analyze_deck(id: int):
                 "name": commander.name,
                 "color_identity": commander.color_identity,
             }
-        
+
         return {
             "deck_id": deck.id,
             "deck_name": deck.name,
@@ -500,8 +500,9 @@ def reset_commander(id: int):
 
 
 @router.post("/{id}/commander", response_model=FullDeckCards)
-def set_commander(id: int, card_id: str):
+def set_commander(id: int, card: SetCommander):
     try:
+        card_id = card.card_id
         deck = deck_service.get_deck_by_id(id)
         assert deck.id is not None, "Deck should have a id"
         card = card_service.get_card_by_id(card_id)

@@ -41,3 +41,10 @@ class Commander(Card):
 
 class CommanderList(BaseModel):
     cards: List[Commander]
+
+
+class SetCommander(BaseModel):
+    card_id: str
+
+    class config:
+        from_attributes = True
