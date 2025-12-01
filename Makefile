@@ -1,26 +1,26 @@
 .PHONY: all build clean clean-frontend package install test
 
 all: node_modules
-	npm run build --prefix editor/frontend
+	npm run build --prefix edhelper/editor/frontend
 	@echo "Cleaning frontend source files..."
-	@if [ -d "editor/frontend" ]; then \
-		find editor/frontend -mindepth 1 -maxdepth 1 ! -name 'dist' -exec rm -rf {} + 2>/dev/null || true; \
+	@if [ -d "edhelper/editor/frontend" ]; then \
+		find edhelper/editor/frontend -mindepth 1 -maxdepth 1 ! -name 'dist' -exec rm -rf {} + 2>/dev/null || true; \
 	fi
 	@echo "Frontend build complete. Only dist/ remains."
 
-node_modules: editor/frontend/package.json
-	npm install -C editor/frontend/
+node_modules: edhelper/editor/frontend/package.json
+	npm install -C edhelper/editor/frontend/
 
-editor/frontend/package.json: editor/frontend/
+edhelper/editor/frontend/package.json: edhelper/editor/frontend/
 	git submodule update --remote
 
-editor/frontend/: 
-	mkdir -p editor/frontend
+edhelper/editor/frontend/: 
+	mkdir -p edhelper/editor/frontend
 
 clean-frontend:
 	@echo "Cleaning frontend source files (keeping dist/)..."
-	@if [ -d "editor/frontend" ]; then \
-		find editor/frontend -mindepth 1 -maxdepth 1 ! -name 'dist' -exec rm -rf {} +; \
+	@if [ -d "edhelper/editor/frontend" ]; then \
+		find edhelper/editor/frontend -mindepth 1 -maxdepth 1 ! -name 'dist' -exec rm -rf {} +; \
 	fi
 
 clean:
@@ -28,8 +28,8 @@ clean:
 	rm -rf build/
 	rm -rf dist/
 	rm -rf *.egg-info/
-	rm -rf editor/frontend/node_modules/
-	rm -rf editor/frontend/dist/
+	rm -rf edhelper/editor/frontend/node_modules/
+	rm -rf edhelper/editor/frontend/dist/
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete
 	find . -type f -name "*.pyo" -delete
@@ -42,9 +42,6 @@ build: all
 
 install: build
 	pip install -e .
-
-install-cli: build
-	pip install -e ".[cli]"
 
 install-shell: build
 	pip install -e ".[shell]"
