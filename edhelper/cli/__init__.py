@@ -13,7 +13,7 @@ from .card import register_card_commands
 from .export import register_export_commands
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.option("-v", "--version", is_flag=True, help="Show version.")
 @click.option("--info", is_flag=True, help="Show metadata.")
 @click.option("--get-key", is_flag=True)

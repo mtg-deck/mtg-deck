@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from edhelper.domain import card_service
 from edhelper.external.api import get_commanders_from_api
-from edhelper.commom.excptions import CardNotFound, ShortPartial
+from edhelper.commom.excptions import CardNotFound, ShortPartial, SyncNotAvailable
+from edhelper.commom.sync_db_commands import SyncDbCommands
 from edhelper.editor.backend.app.schemas.card import Card, CardList
 
 router = APIRouter(prefix="/api/cards", tags=["card"])
@@ -10,6 +11,8 @@ router = APIRouter(prefix="/api/cards", tags=["card"])
 def convert_exception_to_http(e: Exception) -> HTTPException:
     if isinstance(e, CardNotFound):
         return HTTPException(status_code=404, detail=e.message)
+    elif isinstance(e, SyncNotAvailable):
+        return HTTPException(status_code=400, detail=e.message)
     elif isinstance(e, ShortPartial):
         return HTTPException(status_code=400, detail=e.message)
     return None
@@ -23,6 +26,30 @@ def autocomplete_cards(partial: str):
     except HTTPException:
         raise
     except ShortPartial as e:
+        http_exc = convert_exception_to_http(e)
+        if http_exc:
+            raise http_exc
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/sync/{card_id}", response_model=Card)
+def sync_card(card_id: str):
+    try:
+        SyncDbCommands.sync_card(card_id)
+        card = card_service.get_card_by_id(card_id)
+        if not card:
+            raise CardNotFound(card_id)
+        return card
+    except HTTPException:
+        raise
+    except CardNotFound as e:
+        http_exc = convert_exception_to_http(e)
+        if http_exc:
+            raise http_exc
+        raise
+    except SyncNotAvailable as e:
         http_exc = convert_exception_to_http(e)
         if http_exc:
             raise http_exc

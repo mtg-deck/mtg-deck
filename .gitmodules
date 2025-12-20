@@ -1,6 +1,4 @@
-[submodule "editor/frontend"]
-  path = edhelper/editor/frontend
-	url = https://github.com/valentimdev/mtg_deck_builder_front.git
+
 [submodule "edhelper/editor/frontend"]
 	path = edhelper/editor/frontend
 	url = https://github.com/valentimdev/mtg_deck_builder_front.git

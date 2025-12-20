@@ -2,6 +2,7 @@ from typing import Union
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from io import BytesIO, StringIO
+from edhelper.commom.sync_db_commands import SyncDbCommands
 from edhelper.domain import card_service
 from edhelper.editor.backend.app.schemas.card import SetCommander
 from edhelper.domain.deck import Deck
@@ -16,6 +17,7 @@ from edhelper.commom.excptions import (
     CardIsCommander,
     ShortPartial,
     InvalidQuantity,
+    SyncNotAvailable,
 )
 from edhelper.external.api import get_many_cards_from_api
 import csv
@@ -50,7 +52,41 @@ def convert_exception_to_http(e: Exception) -> HTTPException:
         return HTTPException(status_code=400, detail=e.message)
     elif isinstance(e, InvalidQuantity):
         return HTTPException(status_code=400, detail=e.message)
+    elif isinstance(e, SyncNotAvailable):
+        return HTTPException(status_code=400, detail=e.message)
     return None
+
+
+@router.get("/sync/{deck_id}", response_model=CompleteDeckRead)
+def sync_deck(deck_id: int):
+    try:
+        SyncDbCommands.sync_deck(deck_id)
+        deck = deck_service.get_deck_by_id(deck_id)
+        if not deck:
+            raise DeckNotFound(deck_id)
+        assert deck.name is not None, "Deck should have a name"
+        deck, deck_cards = deck_card_service.get_deck_data_by_name(deck.name)
+
+        return {
+            "name": deck.name,
+            "id": deck.id,
+            "last_update": deck.last_update,
+            "cards": deck_cards,
+        }
+    except HTTPException:
+        raise
+    except DeckNotFound as e:
+        http_exc = convert_exception_to_http(e)
+        if http_exc:
+            raise http_exc
+        raise
+    except SyncNotAvailable as e:
+        http_exc = convert_exception_to_http(e)
+        if http_exc:
+            raise http_exc
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/", response_model=DeckList)

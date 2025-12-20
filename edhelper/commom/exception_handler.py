@@ -8,6 +8,7 @@ from .excptions import (
     CardIsCommander,
     ShortPartial,
     InvalidQuantity,
+    SyncNotAvailable,
 )
 
 
@@ -34,6 +35,8 @@ class ExceptionHandler:
             return self._handle_short_partial(exception)
         elif isinstance(exception, InvalidQuantity):
             return self._handle_invalid_quantity(exception)
+        elif isinstance(exception, SyncNotAvailable):
+            return self._handle_sync_not_available(exception)
         return None
 
     def _handle_card_not_found(self, exc: CardNotFound) -> str:
@@ -94,6 +97,15 @@ class ExceptionHandler:
         return exc.message
 
     def _handle_invalid_quantity(self, exc: InvalidQuantity) -> str:
+        if self.mode == self.MODE_CLI:
+            click.echo(f"Error: {exc.message}", err=True)
+        elif self.mode == self.MODE_SHELL:
+            return exc.message
+        else:
+            return exc.message
+        return exc.message
+
+    def _handle_sync_not_available(self, exc: SyncNotAvailable) -> str:
         if self.mode == self.MODE_CLI:
             click.echo(f"Error: {exc.message}", err=True)
         elif self.mode == self.MODE_SHELL:

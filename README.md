@@ -28,8 +28,8 @@ You can install only the components you need:
 # Only shell (interactive REPL)
 pip install edhelper[shell]
 
-# Only CLI commands
-pip install edhelper[cli]
+# Only GUI editor
+pip install edhelper[editor]
 
 # Full installation (CLI + Shell + Editor)
 pip install edhelper[all]

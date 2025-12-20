@@ -48,3 +48,9 @@ class InvalidQuantity(Exception):
         self.qty = qty
         self.message = f"Quantity must be a number, received {qty}"
         super().__init__(self.message)
+
+
+class SyncNotAvailable(Exception):
+    def __init__(self):
+        self.message = "Sync not available, try again later"
+        super().__init__(self.message)
