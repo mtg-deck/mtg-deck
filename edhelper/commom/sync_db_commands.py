@@ -5,6 +5,9 @@ import edhelper.domain.deck_card_service as deck_card_service
 from edhelper.external.api import get_many_cards_from_api, get_card_from_api
 from edhelper.infra.config import settings
 from edhelper.commom.excptions import SyncNotAvailable, CardNotFound, DeckNotFound
+from edhelper.external.currency import convert_usd_to_brl
+from edhelper.domain.card_service import update_card_price
+from edhelper.external.api import get_card_price_from_scryfall
 
 
 class SyncDbCommands:
@@ -91,5 +94,22 @@ class SyncDbCommands:
             updated_deck = get_many_cards_from_api(cards)
             card_service.insert_or_update_cards(updated_deck)
             settings.set_deck_sync_timestamp()
+        except Exception as e:
+            raise e
+
+    @staticmethod
+    def sync_card_price(card_id: str):
+        """
+        Sync card price from Scryfall to database.
+        """
+    
+        card = card_service.get_card_by_id(card_id)
+        if not card:
+            raise CardNotFound(card_id)
+    
+        try:
+            price_usd = get_card_price_from_scryfall(card_id)
+            price_brl = convert_usd_to_brl(price_usd)
+            update_card_price(card_id, price_brl)
         except Exception as e:
             raise e

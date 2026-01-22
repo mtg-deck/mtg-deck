@@ -23,7 +23,7 @@ class Card(BaseModel):
     @field_validator("price", mode="before")
     def fix_price(cls, v):
         if v is None:
-            return "R$0,00"
+            return "0,00"
         return str(v)
 
 

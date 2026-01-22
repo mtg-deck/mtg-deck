@@ -88,3 +88,21 @@ def get_card(card_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/sync-price/{card_id}", response_model=Card)
+def sync_card_price(card_id: str):
+    try:
+        SyncDbCommands.sync_card_price(card_id)
+        card = card_service.get_card_by_id(card_id)
+        if not card:
+            raise CardNotFound(card_id)
+        return card
+    except HTTPException:
+        raise
+    except CardNotFound as e:
+        http_exc = convert_exception_to_http(e)
+        if http_exc:
+            raise http_exc
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
