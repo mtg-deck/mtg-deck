@@ -170,3 +170,16 @@ def get_card_names():
     with transaction(cursor=None) as t:
         card_names = t.execute("SELECT name FROM cards").fetchall()
         return [card[0] for card in card_names]
+
+def update_card_price(card_id: str, price: str, cursor=None):
+    """
+    Atualiza apenas o campo price de uma carta no banco de dados.
+    """
+    with transaction(cursor=cursor) as t:
+        # Verificar se a carta existe
+        card_data = t.execute("SELECT id FROM cards WHERE id = ?", (card_id,)).fetchone()
+        if not card_data:
+            raise CardNotFound(card_id)
+        
+        # Atualizar apenas o preço
+        t.execute("UPDATE cards SET price = ? WHERE id = ?", (price, card_id))

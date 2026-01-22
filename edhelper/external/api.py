@@ -87,3 +87,34 @@ def get_commanders_from_api() -> list[Card]:
         raise Exception(f"HTTP error fetching multiple cards: {e.response.status_code}")
     except httpx.RequestError as e:
         raise Exception(f"Error connecting to API: {str(e)}")
+
+def get_card_price_from_scryfall(card_id: str) -> float:
+    """
+    Busca o preço de uma carta no Scryfall usando o card_id.
+    Retorna o preço em USD (usd, usd_foil, usd_etched).
+    """
+    
+    # Scryfall usa o ID da carta diretamente
+    url = f"https://api.scryfall.com/cards/{card_id}"
+    
+    try:
+        with httpx.Client() as client:
+            resp = client.get(url, timeout=10.0)
+            resp.raise_for_status()
+            data = resp.json()
+
+            prices = data.get("prices", {})
+            price_usd = prices.get("usd") or prices.get("usd_foil") or prices.get("usd_etched")
+            
+            if price_usd is None:
+                return 0.0
+            
+            return float(price_usd)
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            raise Exception(f"Card not found in Scryfall: {card_id}")
+        raise Exception(f"HTTP error fetching price: {e.response.status_code}")
+    except httpx.RequestError as e:
+        raise Exception(f"Error connecting to Scryfall: {str(e)}")
+    except (ValueError, KeyError) as e:
+        raise Exception(f"Error parsing price data: {str(e)}")
