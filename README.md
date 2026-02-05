@@ -1,210 +1,111 @@
 # **edhelper**
 
-A command-line deck builder, analyzer, and management tool for *Magic: The Gathering* — focused on the Commander (EDH) format.
+Uma ferramenta de linha de comando (CLI), Shell interativa e Editor Web para gerenciamento e análise de decks de *Magic: The Gathering* — focada no formato Commander (EDH).
 
-`edhelper` allows you to create, modify, validate, analyze, import, export, and manage Commander decks entirely from the terminal, shell, or web editor.
+O `edhelper` permite criar, modificar, validar, analisar e gerenciar seus decks diretamente do terminal ou através de uma interface web moderna.
 
 ---
 
-## **📦 Installation**
+## **📦 Instalação**
 
-### Full Installation
+Como o projeto está em desenvolvimento, a instalação deve ser feita clonando o repositório e configurando o ambiente localmente.
 
+### 1. Clonar o repositório
 ```bash
-pip install edhelper
+git clone https://github.com/mtg-deck/mtg-deck.git
+cd mtg-deck
 ```
 
-or with **pipx**:
-
+### 2. Configurar o Ambiente (Recomendado Python 3.12)
 ```bash
-pipx install edhelper
+python3.12 -m venv venv
+source venv/bin/activate
 ```
 
-### Modular Installation
-
-You can install only the components you need:
-
+### 3. Instalar Dependências
 ```bash
-# Only shell (interactive REPL)
-pip install edhelper[shell]
-
-# Only GUI editor
-pip install edhelper[editor]
-
-# Full installation (CLI + Shell + Editor)
-pip install edhelper[all]
+pip install -r requirements.txt
 ```
 
 ---
 
-## **🚀 Quick Start**
+## **🚀 Início Rápido**
 
-### Using the CLI
+Com o ambiente ativo, os comandos devem ser executados através do módulo principal do Python.
 
+### Usando o Editor Web
+Inicia o backend em FastAPI para suportar a interface React.
 ```bash
-# Create or open a deck
-edhelper deck create MyDeck
-
-# Add cards to a deck
-edhelper deck add MyDeck "Lightning Bolt" 1
-
-# List all decks
-edhelper deck list
-
-# Search for cards
-edhelper card search "lightning"
-
-# Get top commanders
-edhelper card top-commanders
+python -m edhelper.main start-editor
+# O backend rodará em http://0.0.0.0:3839
 ```
 
-### Using the Shell (Interactive REPL)
-
+### Usando a CLI
 ```bash
-# Start interactive shell
-edhelper shell
+# Listar todos os decks salvos
+python -m edhelper.main deck list
 
-# In the shell:
-[ 1 ] > select MyDeck
-[ 2 ] : [ MyDeck ] > add "Lightning Bolt" 1
-[ 3 ] : [ MyDeck ] > list
+# Buscar cartas na API do Scryfall
+python -m edhelper.main card search "Eriette"
 ```
 
-### Using the Web Editor
-
+### Usando a Shell Interativa (REPL)
 ```bash
-# Start the web editor
-edhelper start-editor
-
-# Opens browser at http://0.0.0.0:3839
+python -m edhelper.main shell
 ```
 
 ---
 
-## **📖 Features**
+## **🔧 Configuração**
 
-### Deck Management
-- Create, delete, rename, and copy decks
-- Import decks from `.txt` files
-- Export decks to `.txt`, `.csv`, or `.json`
-- Set and manage commanders
-
-### Card Operations
-- Search cards by name or partial match
-- Get top 100 commanders
-- Get meta cards for commanders from EDHREC
-- View card details and statistics
-
-### Interactive Shell
-- Full-featured REPL with autocomplete
-- Context-aware commands (root vs deck mode)
-- Command history and suggestions
-
-### Web Editor
-- Modern web interface for deck building
-- RESTful API backend
-- Real-time updates
-
----
-
-## **📚 Documentation**
-
-For detailed documentation on each component:
-
-- **[CLI Commands](cli/README.md)** - Complete CLI command reference
-- **[Shell Guide](shell/README.md)** - Interactive shell usage
-- **[Editor Guide](editor/README.md)** - Web editor documentation
-
----
-
-## **🔧 Configuration**
-
-### Authentication
-
-Before using the tool, you need to authenticate:
-
+### Autenticação
+Antes de utilizar funcionalidades que dependem de chaves de API, você deve configurar suas credenciais:
 ```bash
-edhelper --get-key
+python -m edhelper.main --set-key
 ```
 
-This will prompt you for your API key and client ID.
-
-### Version and Info
-
+### Informações do Sistema
 ```bash
-# Show version
-edhelper --version
+# Verificar versão
+python -m edhelper.main --version
 
-# Show metadata
-edhelper --info
+# Ver metadados do projeto
+python -m edhelper.main --info
 ```
 
 ---
 
-## **🧰 Examples**
+## **📖 Funcionalidades**
 
-### Create a deck with commander
+### Gerenciamento de Decks
+* Criar, deletar, renomear e clonar decks.
+* Importação de listas via arquivos `.txt`.
+* Exportação para formatos `.txt`, `.csv` ou `.json`.
+* Definição automática de Comandantes.
 
-```bash
-edhelper deck create Atraxa "Atraxa, Praetors' Voice"
-```
+### Operações de Cartas
+* Busca inteligente via Scryfall API.
+* Integração com EDHREC para análise de metagame e sugestões de cartas (synergy/inclusion).
+* Visualização de estimativa de preços.
 
-### Import deck from file
-
-```bash
-edhelper deck import-txt decklist.txt MyDeck
-```
-
-### Get meta cards for a commander
-
-```bash
-edhelper deck meta "Atraxa, Praetors' Voice" "Top Cards"
-```
-
-### Export deck
-
-```bash
-edhelper export txt MyDeck /path/to/export/
-```
-
-### Search and add cards
-
-```bash
-# Search for cards
-edhelper card search "lightning"
-
-# Add to deck
-edhelper deck add MyDeck "Lightning Bolt" 1
-```
+### Editor Web
+* Interface intuitiva para construção de decks.
+* Sincronização em tempo real com o banco de dados local.
 
 ---
 
-## **🏗️ Architecture**
+## **🏗️ Arquitetura**
 
-The project is organized into modular components:
-
-- **`cli/`** - CLI commands (can be installed separately)
-- **`shell/`** - Interactive REPL shell
-- **`editor/`** - Web editor (frontend + backend)
-- **`domain/`** - Business logic and services
-- **`commom/`** - Shared utilities and commands
-- **`external/`** - External API integrations
+O projeto segue uma estrutura modular para facilitar a manutenção:
+* `edhelper/` - Código fonte principal.
+* `domain/` - Regras de negócio e entidades de Magic.
+* `infra/` - Configurações de ambiente e persistência de dados.
+* `external/` - Clientes de integração para APIs externas (Scryfall/EDHREC).
 
 ---
 
-## **📝 License**
+## **👥 Créditos**
 
-[Add your license here]
-
----
-
-## **🤝 Contributing**
-
-[Add contributing guidelines here]
-
----
-
-## **📧 Support**
-
-[Add support information here]
-
+* **Frontend**: Desenvolvido em React + Tailwind por [valentimdev](https://github.com/valentimdev).
+* **Backend**: Desenvolvido por Joao utilizando FastAPI.
+* **Assets**: Assets animados produzidos por Bianca Tavares.
